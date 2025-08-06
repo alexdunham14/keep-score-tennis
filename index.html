@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Tennis Scorekeeper</title>
+    <!--
+      The stylesheet provided with the original application has been retained to
+      preserve the familiar look and feel. All of the class names used within
+      this document have been chosen to align with those styles wherever
+      possible. Feel free to tweak the CSS in styles.css to further refine
+      colours, spacing or layout.
+    -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Vue 3 is loaded from a CDN. Using the production build keeps the
+         application lightweight and performant without the need for a build
+         step. -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>Tennis Scorekeeper</h1>
+
+        <!-- Match review / home screen -->
+        <div v-if="stage === 'review'" class="match-review-section">
+            <div class="section-header">
+                <h3>Previous Matches</h3>
+                <button @click="newMatchScreen" id="hide-match-review">Start New Match</button>
+            </div>
+            <div v-if="matches.length === 0">
+                <p class="no-matches">No previous matches found.</p>
+            </div>
+            <div v-else>
+                <div class="match-item" v-for="match in matches" :key="match.id" @click="openMatch(match)">
+                    <div class="match-header">
+                        <div class="match-title">{{ match.player1 }} vs {{ match.player2 }}
+                            <span v-if="match.isInProgress" class="status-indicator">In Progress</span>
+                        </div>
+                        <div class="match-date">{{ formatDate(match.date) }}</div>
+                    </div>
+                    <div class="match-details-summary">
+                        {{ match.tournament || 'Friendly Match' }}
+                        <span v-if="match.court"> • {{ match.court }}</span>
+                    </div>
+                    <div class="match-score">
+                        <template v-if="!match.isInProgress">
+                            {{ match.winner }} wins {{ formatSetScores(match.finalSets) }}
+                        </template>
+                        <template v-else>
+                            Current: {{ formatSetScores(match.finalSets) || '0-0' }}
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match setup screen -->
+        <div v-if="stage === 'setup'" class="player-setup">
+            <div class="match-details">
+                <h4>Match Details:</h4>
+                <div class="match-details-grid">
+                    <input type="text" v-model="newMatch.tournament" placeholder="Tournament/Event">
+                    <input type="date" v-model="newMatch.date">
+                    <input type="text" v-model="newMatch.court" placeholder="Court (e.g. Court 1, Centre Court)">
+                </div>
+            </div>
+            <div class="players-section">
+                <h4>Players:</h4>
+                <input type="text" v-model="newMatch.player1" placeholder="Player 1 Name">
+                <input type="text" v-model="newMatch.player2" placeholder="Player 2 Name">
+            </div>
+            <div class="match-format">
+                <label>
+                    <input type="radio" value="3" v-model.number="newMatch.matchFormat"> Best of 3 Sets
+                </label>
+                <label>
+                    <input type="radio" value="5" v-model.number="newMatch.matchFormat"> Best of 5 Sets
+                </label>
+            </div>
+            <div class="server-selection">
+                <h4>Who serves first?</h4>
+                <div class="server-buttons">
+                    <label>
+                        <input type="radio" value="1" v-model.number="newMatch.firstServer"> 
+                        <span>{{ newMatch.player1 || 'Player 1' }}</span>
+                    </label>
+                    <label>
+                        <input type="radio" value="2" v-model.number="newMatch.firstServer"> 
+                        <span>{{ newMatch.player2 || 'Player 2' }}</span>
+                    </label>
+                </div>
+            </div>
+            <button id="start-match" @click="startMatch">Start Match</button>
+            <button style="margin-left:10px;" @click="stage = 'review'">Cancel</button>
+        </div>
+
+        <!-- Active match scoreboard -->
+        <div v-if="stage === 'match'" class="scoreboard">
+            <div class="match-info">
+                <div class="match-format">
+                    <label>
+                        <input type="radio" value="3" v-model.number="match.matchFormat" @change="changeMatchFormat"> Best of 3 Sets
+                    </label>
+                    <label>
+                        <input type="radio" value="5" v-model.number="match.matchFormat" @change="changeMatchFormat"> Best of 5 Sets
+                    </label>
+                </div>
+                <div class="match-actions">
+                    <button id="go-home" @click="goHome">Go Home</button>
+                    <button id="reset-match" @click="resetMatch">New Match</button>
+                </div>
+            </div>
+            <table class="score-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th v-for="n in maxSets" :key="n" v-show="n <= match.matchFormat">Set {{ n }}</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr :class="{'current-server': match.server === 1, 'winner': match.matchComplete && winner === match.players[1].name}" data-player="1">
+                        <td class="player-name">{{ match.players[1].name }}</td>
+                        <td v-for="n in maxSets" :key="'p1-' + n" v-show="n <= match.matchFormat">{{ displaySetScore(1, n - 1) }}</td>
+                        <td class="point-score">{{ pointDisplay(1) }}</td>
+                    </tr>
+                    <tr :class="{'current-server': match.server === 2, 'winner': match.matchComplete && winner === match.players[2].name}" data-player="2">
+                        <td class="player-name">{{ match.players[2].name }}</td>
+                        <td v-for="n in maxSets" :key="'p2-' + n" v-show="n <= match.matchFormat">{{ displaySetScore(2, n - 1) }}</td>
+                        <td class="point-score">{{ pointDisplay(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="match-status">
+                <div id="serving-indicator">{{ servingIndicator }}</div>
+                <div id="match-result" class="match-result" v-if="match.matchComplete">{{ winner }} wins the match!</div>
+            </div>
+            <div class="controls">
+                <div class="primary-controls">
+                    <button id="point-btn" class="point-button" @click="openServeModal" :disabled="match.matchComplete">Point Played</button>
+                </div>
+                <div class="match-controls">
+                    <button id="undo-btn" @click="undoLastPoint" :disabled="match.matchComplete || match.pointHistory.length === 0">Undo Last Point</button>
+                    <button id="match-over-btn" class="match-over-button" @click="showEndMatchModal" :disabled="match.matchComplete">Match is Over</button>
+                </div>
+                <div class="review-controls">
+                    <button id="show-stats" @click="toggleStats">Match Stats</button>
+                    <button id="set-review" @click="showSetReview">Set Review</button>
+                </div>
+            </div>
+            <!-- Serve stats -->
+            <div class="serve-stats" v-if="statsVisible">
+                <h3>Match Statistics</h3>
+                <div class="stats-grid">
+                    <div class="player-stats">
+                        <h4>{{ match.players[1].name }}</h4>
+                        <div class="stat-row"><span>1st Serve %:</span><span>{{ statDisplay(match.players[1], 'firstServePct') }}</span></div>
+                        <div class="stat-row"><span>1st Serve Won:</span><span>{{ statDisplay(match.players[1], 'firstServeWon') }}</span></div>
+                        <div class="stat-row"><span>2nd Serve Won:</span><span>{{ statDisplay(match.players[1], 'secondServeWon') }}</span></div>
+                        <div class="stat-row"><span>Aces:</span><span>{{ match.players[1].stats.aces }}</span></div>
+                        <div class="stat-row"><span>Double Faults:</span><span>{{ match.players[1].stats.doubleFaults }}</span></div>
+                        <div class="stat-row"><span>Winners:</span><span>{{ match.players[1].stats.winners }}</span></div>
+                        <div class="stat-row"><span>Unforced Errors:</span><span>{{ match.players[1].stats.unforcedErrors }}</span></div>
+                    </div>
+                    <div class="player-stats">
+                        <h4>{{ match.players[2].name }}</h4>
+                        <div class="stat-row"><span>1st Serve %:</span><span>{{ statDisplay(match.players[2], 'firstServePct') }}</span></div>
+                        <div class="stat-row"><span>1st Serve Won:</span><span>{{ statDisplay(match.players[2], 'firstServeWon') }}</span></div>
+                        <div class="stat-row"><span>2nd Serve Won:</span><span>{{ statDisplay(match.players[2], 'secondServeWon') }}</span></div>
+                        <div class="stat-row"><span>Aces:</span><span>{{ match.players[2].stats.aces }}</span></div>
+                        <div class="stat-row"><span>Double Faults:</span><span>{{ match.players[2].stats.doubleFaults }}</span></div>
+                        <div class="stat-row"><span>Winners:</span><span>{{ match.players[2].stats.winners }}</span></div>
+                        <div class="stat-row"><span>Unforced Errors:</span><span>{{ match.players[2].stats.unforcedErrors }}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Serve Modal -->
+        <div v-if="serveModal.visible" class="modal" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>{{ match.players[match.server].name }} serving</h3>
+                    <span class="close" @click="closeServeModal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <!-- First serve selection -->
+                    <div v-if="!serveModal.firstServe">
+                        <h4>First Serve:</h4>
+                        <div class="serve-buttons">
+                            <button class="serve-btn" @click="selectFirstServe('ace')">Ace</button>
+                            <button class="serve-btn" @click="selectFirstServe('unreturned')">Unreturned</button>
+                            <button class="serve-btn" @click="selectFirstServe('in')">In (Returned)</button>
+                            <button class="serve-btn" @click="selectFirstServe('out')">Out/Fault</button>
+                        </div>
+                    </div>
+                    <!-- Second serve selection -->
+                    <div v-else-if="serveModal.firstServe === 'out' && !serveModal.secondServe">
+                        <h4>Second Serve:</h4>
+                        <div class="serve-buttons">
+                            <button class="serve-btn" @click="selectSecondServe('ace')">Ace</button>
+                            <button class="serve-btn" @click="selectSecondServe('unreturned')">Unreturned</button>
+                            <button class="serve-btn" @click="selectSecondServe('in')">In (Returned)</button>
+                            <button class="serve-btn" @click="selectSecondServe('double-fault')">Double Fault</button>
+                        </div>
+                    </div>
+                    <!-- Point ending selection -->
+                    <!-- show final shot selection only when required by serve logic -->
+                    <div v-if="serveNeedsFinal()">
+                        <h4>How did the point end?</h4>
+                        <div class="player-selection">
+                            <h5>Which player hit the final shot?</h5>
+                            <div class="player-buttons">
+                                <button class="player-btn" :class="{'selected': serveModal.finalPlayer === 1}" @click="selectFinalPlayer(1)">{{ match.players[1].name }}</button>
+                                <button class="player-btn" :class="{'selected': serveModal.finalPlayer === 2}" @click="selectFinalPlayer(2)">{{ match.players[2].name }}</button>
+                            </div>
+                        </div>
+                        <div class="stroke-selection" v-if="serveModal.finalPlayer">
+                            <h5>What type of shot?</h5>
+                            <div class="ending-buttons">
+                                <button class="ending-btn" @click="selectStroke('fh-winner')">Forehand Winner</button>
+                                <button class="ending-btn" @click="selectStroke('bh-winner')">Backhand Winner</button>
+                                <button class="ending-btn" @click="selectStroke('fh-unforced')">Forehand UE</button>
+                                <button class="ending-btn" @click="selectStroke('bh-unforced')">Backhand UE</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="point-comment-section" style="margin-top:15px;">
+                        <h4>Point Comment (Optional):</h4>
+                        <textarea v-model="serveModal.comment" placeholder="Add a comment about this point..." rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Set Review Modal -->
+        <div v-if="setReviewVisible" class="modal" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Set Review</h3>
+                    <span class="close" @click="setReviewVisible = false">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div v-if="match.setScores.length === 0 && match.currentSet === 0">
+                        <p class="no-data">No sets completed yet.</p>
+                    </div>
+                    <div v-else>
+                        <div v-for="(set, index) in match.setScores" :key="'set'+index" class="game-review">
+                            <h4>Set {{ index + 1 }}</h4>
+                            <p>{{ match.players[1].name }}: {{ set.p1Games }} &nbsp;—&nbsp; {{ match.players[2].name }}: {{ set.p2Games }}</p>
+                        </div>
+                        <div v-if="match.currentSet < match.matchFormat && (match.players[1].games > 0 || match.players[2].games > 0)" class="game-review">
+                            <h4>Set {{ match.currentSet + 1 }} (In Progress)</h4>
+                            <p>{{ match.players[1].name }}: {{ match.players[1].games }} &nbsp;—&nbsp; {{ match.players[2].name }}: {{ match.players[2].games }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Match Modal -->
+        <div v-if="endMatchModal.visible" class="modal" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>End Match</h3>
+                    <span class="close" @click="endMatchModal.visible = false">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="end-match-reason">
+                        <h4>Reason for ending match:</h4>
+                        <select v-model="endMatchModal.reason">
+                            <option value="completed">Match completed normally</option>
+                            <option value="withdrawal">Player withdrawal</option>
+                            <option value="injury">Injury</option>
+                            <option value="weather">Weather/conditions</option>
+                            <option value="time">Time limit reached</option>
+                            <option value="other">Other reason</option>
+                        </select>
+                    </div>
+                    <div class="match-winner-selection">
+                        <h4>Who won the match?</h4>
+                        <div class="winner-buttons">
+                            <button class="winner-btn" :class="{'selected': endMatchModal.winner === 1}" @click="selectMatchWinner(1)">{{ match.players[1].name }}</button>
+                            <button class="winner-btn" :class="{'selected': endMatchModal.winner === 2}" @click="selectMatchWinner(2)">{{ match.players[2].name }}</button>
+                            <button class="winner-btn" :class="{'selected': endMatchModal.winner === 0}" @click="selectMatchWinner(0)">No Result</button>
+                        </div>
+                    </div>
+                    <div class="end-match-comment">
+                        <h4>Additional Notes (Optional):</h4>
+                        <textarea v-model="endMatchModal.notes" placeholder="Any additional notes about how/why the match ended..." rows="3"></textarea>
+                    </div>
+                    <div class="end-match-actions" style="margin-top:15px;">
+                        <button id="confirm-end-match" @click="confirmEndMatch">End Match</button>
+                        <button id="cancel-end-match" @click="endMatchModal.visible = false">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- The application logic is defined in script.js -->
+    <script src="script.js"></script>
+</body>
+</html>
