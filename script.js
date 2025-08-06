@@ -40,6 +40,8 @@ createApp({
             stage: 'review',
             // List of stored matches loaded from localStorage
             matches: [],
+            // Match start type: 'new' or 'join'
+            matchStartType: 'new',
             // Form model for starting a new match
             newMatch: {
                 tournament: '',
@@ -49,6 +51,24 @@ createApp({
                 player2: 'Player 2',
                 matchFormat: 3,
                 firstServer: 1
+            },
+            // Form model for joining a match in progress
+            joinMatch: {
+                tournament: '',
+                date: '',
+                court: '',
+                player1: 'Player 1',
+                player2: 'Player 2',
+                matchFormat: 3,
+                setScores: [
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 }
+                ],
+                currentPoints: { p1: 0, p2: 0 },
+                currentServer: 1
             },
             // The currently active match object. Set to null until a match is started or loaded.
             match: null,
@@ -136,6 +156,8 @@ createApp({
         newMatchScreen() {
             const today = new Date().toISOString().split('T')[0];
             this.newMatch.date = this.newMatch.date || today;
+            this.joinMatch.date = this.joinMatch.date || today;
+            this.matchStartType = 'new';
             this.stage = 'setup';
         },
         /**
@@ -259,6 +281,164 @@ createApp({
             this.endMatchModal.visible = false;
             // Show scoreboard
             this.stage = 'match';
+        },
+        /**
+         * Join an existing match by setting up the match state based on
+         * the current score and game situation provided in the join form.
+         */
+        startJoinMatch() {
+            // Validate form – ensure players are named
+            if (!this.joinMatch.player1.trim() || !this.joinMatch.player2.trim()) {
+                alert('Please enter names for both players.');
+                return;
+            }
+            
+            // Create base match structure
+            this.match = this.createJoinMatch();
+            
+            // Calculate current set and games based on set scores
+            this.calculateMatchStateFromScores();
+            
+            // Hide any previous modals
+            this.statsVisible = false;
+            this.setReviewVisible = false;
+            this.endMatchModal.visible = false;
+            
+            // Show scoreboard
+            this.stage = 'match';
+        },
+        /**
+         * Create a match object for joining a match in progress.
+         * Similar to createMatch but uses joinMatch data.
+         */
+        createJoinMatch() {
+            const id = Date.now();
+            // Initialise players with names from join form
+            const players = {
+                1: {
+                    name: this.joinMatch.player1.trim(),
+                    sets: [0, 0, 0, 0, 0],
+                    games: 0,
+                    points: this.joinMatch.currentPoints.p1,
+                    stats: {
+                        firstServeTotal: 0,
+                        firstServeIn: 0,
+                        firstServeWon: 0,
+                        secondServeAttempts: 0,
+                        secondServeWon: 0,
+                        aces: 0,
+                        doubleFaults: 0,
+                        winners: 0,
+                        unforcedErrors: 0
+                    }
+                },
+                2: {
+                    name: this.joinMatch.player2.trim(),
+                    sets: [0, 0, 0, 0, 0],
+                    games: 0,
+                    points: this.joinMatch.currentPoints.p2,
+                    stats: {
+                        firstServeTotal: 0,
+                        firstServeIn: 0,
+                        firstServeWon: 0,
+                        secondServeAttempts: 0,
+                        secondServeWon: 0,
+                        aces: 0,
+                        doubleFaults: 0,
+                        winners: 0,
+                        unforcedErrors: 0
+                    }
+                }
+            };
+            return {
+                id: id,
+                tournament: this.joinMatch.tournament.trim(),
+                date: this.joinMatch.date,
+                court: this.joinMatch.court.trim(),
+                players: players,
+                currentSet: 0, // Will be calculated
+                server: this.joinMatch.currentServer,
+                matchFormat: this.joinMatch.matchFormat,
+                matchComplete: false,
+                setScores: [],
+                pointHistory: [],
+                gameStartServer: this.joinMatch.currentServer,
+                isInProgress: true,
+                winner: null,
+                finalSets: []
+            };
+        },
+        /**
+         * Calculate the current match state (sets won, current set, games)
+         * based on the set scores entered in the join form.
+         */
+        calculateMatchStateFromScores() {
+            const setScores = this.joinMatch.setScores;
+            let currentSetIndex = 0;
+            
+            // Process completed sets
+            for (let i = 0; i < Math.min(setScores.length, this.joinMatch.matchFormat); i++) {
+                const set = setScores[i];
+                
+                // Skip empty sets
+                if (set.p1 === 0 && set.p2 === 0) {
+                    break;
+                }
+                
+                // Check if this set is complete (someone won with 2+ game margin and at least 6 games)
+                if (this.isSetComplete(set.p1, set.p2)) {
+                    // Record completed set
+                    this.match.setScores.push({
+                        p1Games: set.p1,
+                        p2Games: set.p2
+                    });
+                    
+                    // Award set to winner
+                    if (set.p1 > set.p2) {
+                        this.match.players[1].sets[i] = 1;
+                    } else {
+                        this.match.players[2].sets[i] = 1;
+                    }
+                    
+                    currentSetIndex++;
+                } else {
+                    // This is the current set in progress
+                    this.match.players[1].games = set.p1;
+                    this.match.players[2].games = set.p2;
+                    break;
+                }
+            }
+            
+            this.match.currentSet = currentSetIndex;
+            
+            // Check if match is complete
+            const setsWon1 = this.match.players[1].sets.reduce((s, v) => s + (v ? 1 : 0), 0);
+            const setsWon2 = this.match.players[2].sets.reduce((s, v) => s + (v ? 1 : 0), 0);
+            const needed = Math.ceil(this.match.matchFormat / 2);
+            
+            if (setsWon1 >= needed || setsWon2 >= needed) {
+                this.match.matchComplete = true;
+                this.match.winner = setsWon1 > setsWon2 ? this.match.players[1].name : this.match.players[2].name;
+            }
+        },
+        /**
+         * Check if a set is complete based on games won.
+         * A set is complete if one player has at least 6 games and a 2+ game lead,
+         * or if the score indicates a completed set (like 7-5, 6-4, etc.)
+         */
+        isSetComplete(p1Games, p2Games) {
+            if (p1Games === 0 && p2Games === 0) return false;
+            
+            // Standard set win conditions
+            if (p1Games >= 6 && (p1Games - p2Games) >= 2) return true;
+            if (p2Games >= 6 && (p2Games - p1Games) >= 2) return true;
+            
+            // Could be a set in progress if close scores
+            if (Math.abs(p1Games - p2Games) < 2 && Math.max(p1Games, p2Games) >= 6) {
+                return false; // Likely still in progress
+            }
+            
+            return false;
         },
         /**
          * Persist the current match progress and return to the home screen.

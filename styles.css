@@ -1262,6 +1262,28 @@ h1 {
     background: #5a6268;
 }
 
+/* Current Match State (Join Match) */
+.current-match-state {
+    margin-top: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 2px solid #10b981;
+    border-radius: 8px;
+}
+
+.current-match-state h4 {
+    color: #1e3a20;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+}
+
+.current-match-state h5 {
+    color: #1e3a20;
+    margin-bottom: 15px;
+    font-size: 1em;
+    font-weight: 600;
+}
+
 /* Mid-Match Modal */
 .current-sets, .current-game, .current-server {
     margin-bottom: 25px;
