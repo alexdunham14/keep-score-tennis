@@ -33,6 +33,14 @@
 
 const { createApp, reactive, computed, watch } = Vue;
 
+// The root Vue application has been extended with a template and a pair of
+// lightweight child components to better separate concerns. The
+// <match-review> component displays the list of previous matches and a
+// button to start a new match. The <match-setup> component encapsulates
+// the form for starting or joining a match. The scoreboard and modals
+// remain in the root template as they depend on many reactive values and
+// methods defined on the root instance.
+
 createApp({
     data() {
         return {
@@ -47,6 +55,8 @@ createApp({
                 tournament: '',
                 date: '',
                 court: '',
+                round: '',
+                startTime: '',
                 player1: 'Player 1',
                 player2: 'Player 2',
                 matchFormat: 3,
@@ -57,6 +67,8 @@ createApp({
                 tournament: '',
                 date: '',
                 court: '',
+                round: '',
+                startTime: '',
                 player1: 'Player 1',
                 player2: 'Player 2',
                 matchFormat: 3,
@@ -94,6 +106,438 @@ createApp({
             }
         };
     },
+
+    // Register child components used in the root template. These
+    // components receive all of the reactive objects and functions they
+    // require via props from the root instance. By isolating the markup
+    // for the match list and setup form into their own components, we
+    // avoid duplicating large template fragments in index.html and make
+    // the overall structure easier to follow.
+    components: {
+        // Displays the list of previous matches and a button to start a new match.
+        // Rather than directly calling parent methods (which would lose the
+        // correct `this` context when passed as props), this component emits
+        // events that the root listens for. This avoids runtime errors
+        // arising from invoking unbound functions.
+        'match-review': {
+            props: ['matches', 'formatDate', 'formatSetScores'],
+            emits: ['open-match', 'new-match-screen'],
+            template: `
+                <div class="match-review-section">
+                    <div class="section-header">
+                        <h3>Previous Matches</h3>
+                        <!-- Emit new-match-screen on click so the parent can handle navigation -->
+                        <button @click="$emit('new-match-screen')" id="hide-match-review">Start New Match</button>
+                    </div>
+                    <div v-if="matches.length === 0">
+                        <p class="no-matches">No previous matches found.</p>
+                    </div>
+                    <div v-else>
+                        <div class="match-item" v-for="match in matches" :key="match.id" @click="$emit('open-match', match)">
+                            <div class="match-header">
+                                <div class="match-title">{{ match.player1 }} vs {{ match.player2 }}
+                                    <span v-if="match.isInProgress" class="status-indicator">In Progress</span>
+                                </div>
+                                <div class="match-date">{{ formatDate(match.date) }}</div>
+                            </div>
+                            <div class="match-details-summary">
+                                {{ match.tournament || 'Friendly Match' }}
+                                <span v-if="match.court"> • {{ match.court }}</span>
+                                <span v-if="match.round"> • {{ match.round }}</span>
+                                <span v-if="match.startTime"> • {{ match.startTime }}</span>
+                            </div>
+                            <div class="match-score">
+                                <template v-if="!match.isInProgress">
+                                    {{ match.winner }} wins {{ formatSetScores(match.finalSets) }}
+                                </template>
+                                <template v-else>
+                                    Current: {{ formatSetScores(match.finalSets) || '0-0' }}
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        // Encapsulates the form for starting or joining a match. Similar to
+        // match-review, it emits events instead of calling parent methods
+        // directly. The parent provides reactive data objects (newMatch,
+        // joinMatch) that this component binds to via v-model.
+        'match-setup': {
+            props: ['matchStartType', 'newMatch', 'joinMatch'],
+            emits: ['start-match', 'start-join-match', 'cancel'],
+            template: `
+                <div class="player-setup">
+                    <!-- Match Type Selection -->
+                    <div class="match-start-option">
+                        <h4>What would you like to do?</h4>
+                        <div class="match-status-buttons">
+                            <label>
+                                <!-- Use :checked and @change to update matchStartType via an emitted event.
+                                     Props are read‑only so we cannot bind v-model directly to matchStartType. -->
+                                <input type="radio" value="new" :checked="matchStartType === 'new'" @change="$emit('update-match-start-type', 'new')"> Start New Match
+                            </label>
+                            <label>
+                                <input type="radio" value="join" :checked="matchStartType === 'join'" @change="$emit('update-match-start-type', 'join')"> Join Match in Progress
+                            </label>
+                        </div>
+                    </div>
+                    <!-- New Match Setup -->
+                    <div v-if="matchStartType === 'new'">
+                        <div class="match-details">
+                            <h4>Match Details:</h4>
+                            <div class="match-details-grid">
+                                <input type="text" v-model="newMatch.tournament" placeholder="Tournament/Event">
+                                <input type="date" v-model="newMatch.date">
+                                <input type="text" v-model="newMatch.court" placeholder="Court (e.g. Court 1, Centre Court)">
+                            </div>
+                            <div class="match-details-grid" style="margin-top:10px;">
+                                <input type="text" v-model="newMatch.round" placeholder="Round (e.g. Quarterfinal)">
+                                <input type="time" v-model="newMatch.startTime">
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="players-section">
+                            <h4>Players:</h4>
+                            <input type="text" v-model="newMatch.player1" placeholder="Player 1 Name">
+                            <input type="text" v-model="newMatch.player2" placeholder="Player 2 Name">
+                        </div>
+                        <div class="match-format">
+                            <label>
+                                <input type="radio" value="3" v-model.number="newMatch.matchFormat"> Best of 3 Sets
+                            </label>
+                            <label>
+                                <input type="radio" value="5" v-model.number="newMatch.matchFormat"> Best of 5 Sets
+                            </label>
+                        </div>
+                        <div class="server-selection">
+                            <h4>Who serves first?</h4>
+                            <div class="server-buttons">
+                                <label>
+                                    <input type="radio" value="1" v-model.number="newMatch.firstServer"> 
+                                    <span>{{ newMatch.player1 || 'Player 1' }}</span>
+                                </label>
+                                <label>
+                                    <input type="radio" value="2" v-model.number="newMatch.firstServer"> 
+                                    <span>{{ newMatch.player2 || 'Player 2' }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Emit start-match event instead of calling parent method -->
+                        <button id="start-match" @click="$emit('start-match')">Start Match</button>
+                    </div>
+                    <!-- Join Match in Progress -->
+                    <div v-if="matchStartType === 'join'">
+                        <div class="match-details">
+                            <h4>Match Details:</h4>
+                            <div class="match-details-grid">
+                                <input type="text" v-model="joinMatch.tournament" placeholder="Tournament/Event">
+                                <input type="date" v-model="joinMatch.date">
+                                <input type="text" v-model="joinMatch.court" placeholder="Court (e.g. Court 1, Centre Court)">
+                            </div>
+                            <div class="match-details-grid" style="margin-top:10px;">
+                                <input type="text" v-model="joinMatch.round" placeholder="Round (e.g. Quarterfinal)">
+                                <input type="time" v-model="joinMatch.startTime">
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="players-section">
+                            <h4>Players:</h4>
+                            <input type="text" v-model="joinMatch.player1" placeholder="Player 1 Name">
+                            <input type="text" v-model="joinMatch.player2" placeholder="Player 2 Name">
+                        </div>
+                        <div class="match-format">
+                            <label>
+                                <input type="radio" value="3" v-model.number="joinMatch.matchFormat"> Best of 3 Sets
+                            </label>
+                            <label>
+                                <input type="radio" value="5" v-model.number="joinMatch.matchFormat"> Best of 5 Sets
+                            </label>
+                        </div>
+                        <!-- Current Match State -->
+                        <div class="current-match-state">
+                            <h4>Current Match State:</h4>
+                            <div class="current-sets">
+                                <h5>Completed Sets:</h5>
+                                <div class="sets-input-grid">
+                                    <div v-for="n in joinMatch.matchFormat" :key="'set'+n" class="set-input" v-show="n <= Math.min(joinMatch.matchFormat, 5)">
+                                        <label>Set {{ n }}:</label>
+                                        <input type="number" v-model.number="joinMatch.setScores[n-1].p1" min="0" max="20" placeholder="0">
+                                        <span>-</span>
+                                        <input type="number" v-model.number="joinMatch.setScores[n-1].p2" min="0" max="20" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="current-game">
+                                <h5>Current Game:</h5>
+                                <div class="game-score-inputs">
+                                    <div class="game-score-input">
+                                        <label>{{ joinMatch.player1 }} points:</label>
+                                        <select v-model="joinMatch.currentPoints.p1">
+                                            <option value="0">0</option>
+                                            <option value="1">15</option>
+                                            <option value="2">30</option>
+                                            <option value="3">40</option>
+                                            <option value="4">40+ (Ad)</option>
+                                        </select>
+                                    </div>
+                                    <div class="game-score-input">
+                                        <label>{{ joinMatch.player2 }} points:</label>
+                                        <select v-model="joinMatch.currentPoints.p2">
+                                            <option value="0">0</option>
+                                            <option value="1">15</option>
+                                            <option value="2">30</option>
+                                            <option value="3">40</option>
+                                            <option value="4">40+ (Ad)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="current-server">
+                                <h5>Who is currently serving?</h5>
+                                <div class="current-server-buttons">
+                                    <button class="current-server-btn" :class="{'selected': joinMatch.currentServer === 1}" @click="joinMatch.currentServer = 1">{{ joinMatch.player1 || 'Player 1' }}</button>
+                                    <button class="current-server-btn" :class="{'selected': joinMatch.currentServer === 2}" @click="joinMatch.currentServer = 2">{{ joinMatch.player2 || 'Player 2' }}</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Emit start-join-match event instead of calling parent method -->
+                        <button id="join-match" @click="$emit('start-join-match')">Join Match</button>
+                    </div>
+                    <button style="margin-left:10px;" @click="$emit('cancel')">Cancel</button>
+                </div>
+            `
+        }
+    },
+
+    // Define the top‑level template. It renders a heading and then
+    // chooses between the review screen, setup form, scoreboard and
+    // various modals based on the current application stage and state.
+    template: `
+        <div>
+            <h1>Tennis Scorekeeper</h1>
+            <match-review
+                v-if="stage === 'review'"
+                :matches="matches"
+                :format-date="formatDate"
+                :format-set-scores="formatSetScores"
+                @open-match="openMatch"
+                @new-match-screen="newMatchScreen"
+            ></match-review>
+            <match-setup
+                v-if="stage === 'setup'"
+                :match-start-type="matchStartType"
+                :new-match="newMatch"
+                :join-match="joinMatch"
+                @start-match="startMatch"
+                @start-join-match="startJoinMatch"
+                @cancel="stage = 'review'"
+                @update-match-start-type="matchStartType = $event"
+            ></match-setup>
+            <!-- Active match scoreboard and related controls -->
+            <div v-if="stage === 'match'" class="scoreboard">
+                <div class="match-info">
+                    <div class="match-format">
+                        <label>
+                            <input type="radio" value="3" v-model.number="match.matchFormat" @change="changeMatchFormat"> Best of 3 Sets
+                        </label>
+                        <label>
+                            <input type="radio" value="5" v-model.number="match.matchFormat" @change="changeMatchFormat"> Best of 5 Sets
+                        </label>
+                    </div>
+                    <div class="match-actions">
+                        <button id="go-home" @click="goHome">Go Home</button>
+                        <button id="reset-match" @click="resetMatch">New Match</button>
+                    </div>
+                    <!-- Display tournament metadata including round, date, time and court -->
+                    <div class="match-meta" style="margin-top:10px; font-size:0.85em; color: var(--text-color);">
+                        <span v-if="match.tournament">{{ match.tournament }}</span>
+                        <span v-if="match.round"> • {{ match.round }}</span>
+                        <span v-if="match.date"> • {{ formatDate(match.date) }}</span>
+                        <span v-if="match.startTime"> • {{ match.startTime }}</span>
+                        <span v-if="match.court"> • {{ match.court }}</span>
+                    </div>
+                </div>
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th v-for="n in maxSets" :key="n" v-show="n <= match.matchFormat">Set {{ n }}</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr :class="{'current-server': match.server === 1, 'winner': match.matchComplete && winner === match.players[1].name}" data-player="1">
+                            <td class="player-name">{{ match.players[1].name }}</td>
+                            <td v-for="n in maxSets" :key="'p1-' + n" v-show="n <= match.matchFormat">{{ displaySetScore(1, n - 1) }}</td>
+                            <td class="point-score">{{ pointDisplay(1) }}</td>
+                        </tr>
+                        <tr :class="{'current-server': match.server === 2, 'winner': match.matchComplete && winner === match.players[2].name}" data-player="2">
+                            <td class="player-name">{{ match.players[2].name }}</td>
+                            <td v-for="n in maxSets" :key="'p2-' + n" v-show="n <= match.matchFormat">{{ displaySetScore(2, n - 1) }}</td>
+                            <td class="point-score">{{ pointDisplay(2) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="match-status">
+                    <div id="serving-indicator">{{ servingIndicator }}</div>
+                    <div id="match-result" class="match-result" v-if="match.matchComplete">{{ winner }} wins the match!</div>
+                </div>
+                <div class="controls">
+                    <div class="primary-controls">
+                        <button id="point-btn" class="point-button" @click="openServeModal" :disabled="match.matchComplete">Point Played</button>
+                    </div>
+                    <div class="match-controls">
+                        <button id="undo-btn" @click="undoLastPoint" :disabled="match.matchComplete || match.pointHistory.length === 0">Undo Last Point</button>
+                        <button id="match-over-btn" class="match-over-button" @click="showEndMatchModal" :disabled="match.matchComplete">Match is Over</button>
+                    </div>
+                    <div class="review-controls">
+                        <button id="show-stats" @click="toggleStats">Match Stats</button>
+                        <button id="set-review" @click="showSetReview">Set Review</button>
+                    </div>
+                </div>
+                <div class="serve-stats" v-if="statsVisible">
+                    <h3>Match Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="player-stats">
+                            <h4>{{ match.players[1].name }}</h4>
+                            <div class="stat-row"><span>1st Serve %:</span><span>{{ statDisplay(match.players[1], 'firstServePct') }}</span></div>
+                            <div class="stat-row"><span>1st Serve Won:</span><span>{{ statDisplay(match.players[1], 'firstServeWon') }}</span></div>
+                            <div class="stat-row"><span>2nd Serve Won:</span><span>{{ statDisplay(match.players[1], 'secondServeWon') }}</span></div>
+                            <div class="stat-row"><span>Aces:</span><span>{{ match.players[1].stats.aces }}</span></div>
+                            <div class="stat-row"><span>Double Faults:</span><span>{{ match.players[1].stats.doubleFaults }}</span></div>
+                            <div class="stat-row"><span>Winners:</span><span>{{ match.players[1].stats.winners }}</span></div>
+                            <div class="stat-row"><span>Unforced Errors:</span><span>{{ match.players[1].stats.unforcedErrors }}</span></div>
+                        </div>
+                        <div class="player-stats">
+                            <h4>{{ match.players[2].name }}</h4>
+                            <div class="stat-row"><span>1st Serve %:</span><span>{{ statDisplay(match.players[2], 'firstServePct') }}</span></div>
+                            <div class="stat-row"><span>1st Serve Won:</span><span>{{ statDisplay(match.players[2], 'firstServeWon') }}</span></div>
+                            <div class="stat-row"><span>2nd Serve Won:</span><span>{{ statDisplay(match.players[2], 'secondServeWon') }}</span></div>
+                            <div class="stat-row"><span>Aces:</span><span>{{ match.players[2].stats.aces }}</span></div>
+                            <div class="stat-row"><span>Double Faults:</span><span>{{ match.players[2].stats.doubleFaults }}</span></div>
+                            <div class="stat-row"><span>Winners:</span><span>{{ match.players[2].stats.winners }}</span></div>
+                            <div class="stat-row"><span>Unforced Errors:</span><span>{{ match.players[2].stats.unforcedErrors }}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Serve Modal -->
+            <div v-if="serveModal.visible" class="modal" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>{{ match.players[match.server].name }} serving</h3>
+                        <span class="close" @click="closeServeModal">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="!serveModal.firstServe">
+                            <h4>First Serve:</h4>
+                            <div class="serve-buttons">
+                                <button class="serve-btn" @click="selectFirstServe('ace')">Ace</button>
+                                <button class="serve-btn" @click="selectFirstServe('unreturned')">Unreturned</button>
+                                <button class="serve-btn" @click="selectFirstServe('in')">In (Returned)</button>
+                                <button class="serve-btn" @click="selectFirstServe('out')">Out/Fault</button>
+                            </div>
+                        </div>
+                        <div v-else-if="serveModal.firstServe === 'out' && !serveModal.secondServe">
+                            <h4>Second Serve:</h4>
+                            <div class="serve-buttons">
+                                <button class="serve-btn" @click="selectSecondServe('ace')">Ace</button>
+                                <button class="serve-btn" @click="selectSecondServe('unreturned')">Unreturned</button>
+                                <button class="serve-btn" @click="selectSecondServe('in')">In (Returned)</button>
+                                <button class="serve-btn" @click="selectSecondServe('double-fault')">Double Fault</button>
+                            </div>
+                        </div>
+                        <div v-if="serveNeedsFinal()">
+                            <h4>How did the point end?</h4>
+                            <div class="player-selection">
+                                <h5>Which player hit the final shot?</h5>
+                                <div class="player-buttons">
+                                    <button class="player-btn" :class="{'selected': serveModal.finalPlayer === 1}" @click="selectFinalPlayer(1)">{{ match.players[1].name }}</button>
+                                    <button class="player-btn" :class="{'selected': serveModal.finalPlayer === 2}" @click="selectFinalPlayer(2)">{{ match.players[2].name }}</button>
+                                </div>
+                            </div>
+                            <div class="stroke-selection" v-if="serveModal.finalPlayer">
+                                <h5>What type of shot?</h5>
+                                <div class="ending-buttons">
+                                    <button class="ending-btn" @click="selectStroke('fh-winner')">Forehand Winner</button>
+                                    <button class="ending-btn" @click="selectStroke('bh-winner')">Backhand Winner</button>
+                                    <button class="ending-btn" @click="selectStroke('fh-unforced')">Forehand UE</button>
+                                    <button class="ending-btn" @click="selectStroke('bh-unforced')">Backhand UE</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="point-comment-section" style="margin-top:15px;">
+                            <h4>Point Comment (Optional):</h4>
+                            <textarea v-model="serveModal.comment" placeholder="Add a comment about this point..." rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Set Review Modal -->
+            <div v-if="setReviewVisible" class="modal" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Set Review</h3>
+                        <span class="close" @click="setReviewVisible = false">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="match.setScores.length === 0 && match.currentSet === 0">
+                            <p class="no-data">No sets completed yet.</p>
+                        </div>
+                        <div v-else>
+                            <div v-for="(set, index) in match.setScores" :key="'set'+index" class="game-review">
+                                <h4>Set {{ index + 1 }}</h4>
+                                <p>{{ match.players[1].name }}: {{ set.p1Games }} &nbsp;—&nbsp; {{ match.players[2].name }}: {{ set.p2Games }}</p>
+                            </div>
+                            <div v-if="match.currentSet < match.matchFormat && (match.players[1].games > 0 || match.players[2].games > 0)" class="game-review">
+                                <h4>Set {{ match.currentSet + 1 }} (In Progress)</h4>
+                                <p>{{ match.players[1].name }}: {{ match.players[1].games }} &nbsp;—&nbsp; {{ match.players[2].name }}: {{ match.players[2].games }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Match Modal -->
+            <div v-if="endMatchModal.visible" class="modal" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>End Match</h3>
+                        <span class="close" @click="endMatchModal.visible = false">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="end-match-reason">
+                            <h4>Reason for ending match:</h4>
+                            <select v-model="endMatchModal.reason">
+                                <option value="completed">Match completed normally</option>
+                                <option value="withdrawal">Player withdrawal</option>
+                                <option value="injury">Injury</option>
+                                <option value="weather">Weather/conditions</option>
+                                <option value="time">Time limit reached</option>
+                                <option value="other">Other reason</option>
+                            </select>
+                        </div>
+                        <div class="match-winner-selection">
+                            <h4>Who won the match?</h4>
+                            <div class="winner-buttons">
+                                <button class="winner-btn" :class="{'selected': endMatchModal.winner === 1}" @click="selectMatchWinner(1)">{{ match.players[1].name }}</button>
+                                <button class="winner-btn" :class="{'selected': endMatchModal.winner === 2}" @click="selectMatchWinner(2)">{{ match.players[2].name }}</button>
+                                <button class="winner-btn" :class="{'selected': endMatchModal.winner === 0}" @click="selectMatchWinner(0)">No Result</button>
+                            </div>
+                        </div>
+                        <div class="end-match-comment">
+                            <h4>Additional Notes (Optional):</h4>
+                            <textarea v-model="endMatchModal.notes" placeholder="Any additional notes about how/why the match ended..." rows="3"></textarea>
+                        </div>
+                        <div class="end-match-actions" style="margin-top:15px;">
+                            <button id="confirm-end-match" @click="confirmEndMatch">End Match</button>
+                            <button id="cancel-end-match" @click="endMatchModal.visible = false">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
     computed: {
         /**
          * Returns the maximum number of sets supported (always 5). We use
@@ -246,6 +690,8 @@ createApp({
                 tournament: this.newMatch.tournament.trim(),
                 date: this.newMatch.date,
                 court: this.newMatch.court.trim(),
+                round: this.newMatch.round.trim(),
+                startTime: this.newMatch.startTime,
                 players: players,
                 currentSet: 0,
                 server: this.newMatch.firstServer,
@@ -355,6 +801,8 @@ createApp({
                 tournament: this.joinMatch.tournament.trim(),
                 date: this.joinMatch.date,
                 court: this.joinMatch.court.trim(),
+                round: this.joinMatch.round.trim(),
+                startTime: this.joinMatch.startTime,
                 players: players,
                 currentSet: 0, // Will be calculated
                 server: this.joinMatch.currentServer,
@@ -474,6 +922,8 @@ createApp({
                 date: this.match.date,
                 tournament: this.match.tournament,
                 court: this.match.court,
+                round: this.match.round,
+                startTime: this.match.startTime,
                 player1: this.match.players[1].name,
                 player2: this.match.players[2].name,
                 format: this.match.matchFormat,
@@ -1009,6 +1459,8 @@ createApp({
                 this.match.tournament = stored.tournament;
                 this.match.date = stored.date;
                 this.match.court = stored.court;
+                this.match.round = stored.round || '';
+                this.match.startTime = stored.startTime || '';
                 this.match.players[1].name = stored.player1;
                 this.match.players[2].name = stored.player2;
                 this.match.matchFormat = stored.format;
@@ -1045,6 +1497,8 @@ createApp({
             this.match.tournament = stored.tournament;
             this.match.date = stored.date;
             this.match.court = stored.court;
+            this.match.round = stored.round || '';
+            this.match.startTime = stored.startTime || '';
             this.match.players[1].name = stored.player1;
             this.match.players[2].name = stored.player2;
             this.match.matchFormat = stored.format;

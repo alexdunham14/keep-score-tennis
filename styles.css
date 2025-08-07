@@ -4,11 +4,30 @@
     box-sizing: border-box;
 }
 
+/*
+ * Colour palette definitions
+ *
+ * A fresh set of CSS variables define the primary and secondary colours
+ * used throughout the application. These variables make it easy to
+ * customise the look and feel of the scorekeeper while maintaining
+ * consistency across different sections of the UI. The palette was
+ * chosen to be bright and modern, with a blue primary accent and
+ * complementary secondary and danger tones.
+ */
+:root {
+    --primary-bg: #f0f4f8;
+    --secondary-bg: #ffffff;
+    --primary-color: #2F80ED;
+    --secondary-color: #27AE60;
+    --danger-color: #EB5757;
+    --text-color: #333333;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #1e3a20 0%, #0f2610 100%);
+    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
     min-height: 100vh;
-    color: #333;
+    color: var(--text-color);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -21,20 +40,20 @@ body {
 
 h1 {
     text-align: center;
-    color: white;
+    color: var(--primary-color);
     margin-bottom: 24px;
     font-size: 2.2em;
     font-weight: 700;
     letter-spacing: -0.025em;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Match Review Section */
 .match-review-section {
-    background: white;
+    background: var(--secondary-bg);
     padding: 24px;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
     margin-bottom: 24px;
     border: 1px solid rgba(0,0,0,0.05);
 }
@@ -48,7 +67,7 @@ h1 {
 
 .section-header h3 {
     margin: 0;
-    color: #1e3a20;
+    color: var(--primary-color);
     font-size: 1.3em;
     font-weight: 600;
     letter-spacing: -0.015em;
@@ -56,7 +75,7 @@ h1 {
 
 #hide-match-review {
     padding: 8px 16px;
-    background: #10b981;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 6px;
@@ -68,7 +87,7 @@ h1 {
 }
 
 #hide-match-review:hover {
-    background: #059669;
+    background: #1c5fc8; /* slightly darker blue */
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
@@ -215,7 +234,7 @@ h1 {
 
 .player-setup button {
     padding: 10px 24px;
-    background: #1e3a20;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 6px;
@@ -228,7 +247,7 @@ h1 {
 }
 
 .player-setup button:hover {
-    background: #0f2610;
+    background: #1c5fc8;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
@@ -276,9 +295,9 @@ h1 {
 }
 
 .scoreboard {
-    background: white;
+    background: var(--secondary-bg);
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
     overflow: hidden;
     border: 1px solid rgba(0,0,0,0.05);
 }
@@ -286,7 +305,7 @@ h1 {
 .match-info {
     background: #f8f9fa;
     padding: 15px 20px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e5e7eb;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -302,6 +321,7 @@ h1 {
     align-items: center;
     gap: 5px;
     cursor: pointer;
+    color: var(--text-color);
 }
 
 .match-actions {
@@ -325,7 +345,7 @@ h1 {
 
 #reset-match {
     padding: 8px 16px;
-    background: #dc3545;
+    background: var(--danger-color);
     color: white;
     border: none;
     border-radius: 4px;
@@ -334,7 +354,7 @@ h1 {
 }
 
 #reset-match:hover {
-    background: #c82333;
+    background: #c32c2c;
 }
 
 .score-table {
@@ -344,7 +364,7 @@ h1 {
 }
 
 .score-table th {
-    background: #1e3a20;
+    background: var(--primary-color);
     color: white;
     padding: 12px 8px;
     text-align: center;
@@ -478,11 +498,11 @@ h1 {
 }
 
 .winner {
-    background: #d4edda !important;
+    background: #eafaf1 !important;
 }
 
 .current-server {
-    background: #fff3cd !important;
+    background: #fdf8e8 !important;
 }
 
 /* Additional control buttons */
@@ -494,7 +514,7 @@ h1 {
 
 #show-stats, #edit-points, #set-review {
     padding: 8px 16px;
-    background: #3b82f6;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 6px;
@@ -505,13 +525,13 @@ h1 {
 }
 
 #show-stats:hover, #edit-points:hover, #set-review:hover {
-    background: #2563eb;
+    background: #1c5fc8;
     transform: translateY(-1px);
 }
 
 .point-button, .add-game-button, .match-over-button {
     padding: 12px 24px;
-    background: #10b981;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 5px;
@@ -522,23 +542,23 @@ h1 {
 }
 
 .add-game-button {
-    background: #17a2b8;
+    background: var(--secondary-color);
 }
 
 .match-over-button {
-    background: #dc3545;
+    background: var(--danger-color);
 }
 
 .point-button:hover {
-    background: #059669;
+    background: #1c5fc8;
 }
 
 .add-game-button:hover {
-    background: #138496;
+    background: #218c50;
 }
 
 .match-over-button:hover {
-    background: #c82333;
+    background: #c32c2c;
 }
 
 /* Serve Statistics */
@@ -690,7 +710,7 @@ h1 {
 
 .serve-btn {
     padding: 12px 16px;
-    background: #10b981;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 6px;
@@ -701,19 +721,51 @@ h1 {
 }
 
 .serve-btn:hover {
-    background: #059669;
+    background: #1c5fc8;
 }
 
 .serve-btn.selected {
-    background: #1e3a20;
+    background: var(--secondary-color);
 }
 
 .serve-btn[data-serve="double-fault"] {
-    background: #dc3545;
+    background: var(--danger-color);
 }
 
 .serve-btn[data-serve="double-fault"]:hover {
-    background: #c82333;
+    background: #c32c2c;
+}
+
+/*
+ * Responsive adjustments for small screens. On narrow viewports the
+ * application stacks form fields vertically and ensures buttons and
+ * controls remain accessible without horizontal scrolling.
+ */
+@media (max-width: 600px) {
+    .match-details-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    .match-status-buttons,
+    .server-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .players-section input {
+        width: 100% !important;
+        margin: 6px 0;
+    }
+    .controls {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .serve-buttons,
+    .player-buttons {
+        grid-template-columns: 1fr 1fr !important;
+    }
 }
 
 .second-serve-section {
