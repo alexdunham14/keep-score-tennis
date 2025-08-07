@@ -57,8 +57,8 @@ createApp({
                 court: '',
                 round: '',
                 startTime: '',
-                player1: 'Player 1',
-                player2: 'Player 2',
+                player1: '1',
+                player2: '2',
                 matchFormat: 3,
                 firstServer: 1
             },
@@ -69,8 +69,8 @@ createApp({
                 court: '',
                 round: '',
                 startTime: '',
-                player1: 'Player 1',
-                player2: 'Player 2',
+                player1: '1',
+                player2: '2',
                 matchFormat: 3,
                 setScores: [
                     { p1: 0, p2: 0 },
@@ -91,12 +91,18 @@ createApp({
                 secondServe: '',
                 finalPlayer: null,
                 strokeType: '',
+                pointType: '',
+                comment: ''
+            },
+            // Game comment modal state
+            gameCommentModal: {
+                visible: false,
                 comment: ''
             },
             // Flag to show/hide the statistics panel
             statsVisible: false,
-            // Flag to show/hide the set review modal
-            setReviewVisible: false,
+            // Flag to show/hide the point breakdown modal
+            pointBreakdownVisible: false,
             // End match modal state
             endMatchModal: {
                 visible: false,
@@ -215,11 +221,11 @@ createApp({
                             <div class="server-buttons">
                                 <label>
                                     <input type="radio" value="1" v-model.number="newMatch.firstServer"> 
-                                    <span>{{ newMatch.player1 || 'Player 1' }}</span>
+                                    <span>{{ newMatch.player1 || '1' }}</span>
                                 </label>
                                 <label>
                                     <input type="radio" value="2" v-model.number="newMatch.firstServer"> 
-                                    <span>{{ newMatch.player2 || 'Player 2' }}</span>
+                                    <span>{{ newMatch.player2 || '2' }}</span>
                                 </label>
                             </div>
                         </div>
@@ -296,8 +302,8 @@ createApp({
                             <div class="current-server">
                                 <h5>Who is currently serving?</h5>
                                 <div class="current-server-buttons">
-                                    <button class="current-server-btn" :class="{'selected': joinMatch.currentServer === 1}" @click="joinMatch.currentServer = 1">{{ joinMatch.player1 || 'Player 1' }}</button>
-                                    <button class="current-server-btn" :class="{'selected': joinMatch.currentServer === 2}" @click="joinMatch.currentServer = 2">{{ joinMatch.player2 || 'Player 2' }}</button>
+                                    <button class="current-server-btn" :class="{'selected': joinMatch.currentServer === 1}" @click="joinMatch.currentServer = 1">{{ joinMatch.player1 || '1' }}</button>
+                                    <button class="current-server-btn" :class="{'selected': joinMatch.currentServer === 2}" @click="joinMatch.currentServer = 2">{{ joinMatch.player2 || '2' }}</button>
                                 </div>
                             </div>
                         </div>
@@ -393,7 +399,7 @@ createApp({
                     </div>
                     <div class="review-controls">
                         <button id="show-stats" @click="toggleStats">Match Stats</button>
-                        <button id="set-review" @click="showSetReview">Set Review</button>
+                        <button id="point-breakdown" @click="showPointBreakdown">Point Breakdown</button>
                     </div>
                 </div>
                 <div class="serve-stats" v-if="statsVisible">
@@ -467,33 +473,89 @@ createApp({
                                 </div>
                             </div>
                         </div>
+                        <div class="point-type-section" style="margin-top:15px;">
+                            <h4>Point Type:</h4>
+                            <div class="point-type-buttons">
+                                <button class="point-type-btn" :class="{'selected': serveModal.pointType === 'short'}" @click="serveModal.pointType = 'short'">Short</button>
+                                <button class="point-type-btn" :class="{'selected': serveModal.pointType === 'medium'}" @click="serveModal.pointType = 'medium'">Medium</button>
+                                <button class="point-type-btn" :class="{'selected': serveModal.pointType === 'long'}" @click="serveModal.pointType = 'long'">Long</button>
+                            </div>
+                        </div>
                         <div class="point-comment-section" style="margin-top:15px;">
                             <h4>Point Comment (Optional):</h4>
-                            <textarea v-model="serveModal.comment" placeholder="Add a comment about this point..." rows="2"></textarea>
+                            <textarea v-model="serveModal.comment" placeholder="Add a comment about this point..." rows="4" class="mobile-friendly-textarea"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Set Review Modal -->
-            <div v-if="setReviewVisible" class="modal" style="display:block;">
-                <div class="modal-content">
+            <!-- Point Breakdown Modal -->
+            <div v-if="pointBreakdownVisible" class="modal" style="display:block;">
+                <div class="modal-content point-breakdown-modal">
                     <div class="modal-header">
-                        <h3>Set Review</h3>
-                        <span class="close" @click="setReviewVisible = false">&times;</span>
+                        <h3>Point-by-Point Breakdown</h3>
+                        <span class="close" @click="pointBreakdownVisible = false">&times;</span>
                     </div>
                     <div class="modal-body">
-                        <div v-if="match.setScores.length === 0 && match.currentSet === 0">
-                            <p class="no-data">No sets completed yet.</p>
+                        <div v-if="match.pointHistory.length === 0">
+                            <p class="no-data">No points played yet.</p>
                         </div>
-                        <div v-else>
-                            <div v-for="(set, index) in match.setScores" :key="'set'+index" class="game-review">
-                                <h4>Set {{ index + 1 }}</h4>
-                                <p>{{ match.players[1].name }}: {{ set.p1Games }} &nbsp;—&nbsp; {{ match.players[2].name }}: {{ set.p2Games }}</p>
+                        <div v-else class="point-breakdown-content">
+                            <div class="breakdown-summary">
+                                <h4>Match Summary</h4>
+                                <div class="summary-stats">
+                                    <div class="stat-item">Total Points: {{ match.pointHistory.length }}</div>
+                                    <div class="stat-item">Short Points: {{ match.pointHistory.filter(p => p.pointType === 'short').length }}</div>
+                                    <div class="stat-item">Medium Points: {{ match.pointHistory.filter(p => p.pointType === 'medium').length }}</div>
+                                    <div class="stat-item">Long Points: {{ match.pointHistory.filter(p => p.pointType === 'long').length }}</div>
+                                    <div class="stat-item">No Type: {{ match.pointHistory.filter(p => !p.pointType).length }}</div>
+                                </div>
                             </div>
-                            <div v-if="match.currentSet < match.matchFormat && (match.players[1].games > 0 || match.players[2].games > 0)" class="game-review">
-                                <h4>Set {{ match.currentSet + 1 }} (In Progress)</h4>
-                                <p>{{ match.players[1].name }}: {{ match.players[1].games }} &nbsp;—&nbsp; {{ match.players[2].name }}: {{ match.players[2].games }}</p>
+                            <div class="points-list">
+                                <h4>Point History</h4>
+                                <div class="point-history-container">
+                                    <div v-for="(point, index) in match.pointHistory.slice().reverse()" :key="index" class="point-entry">
+                                        <div class="point-header">
+                                            <span class="point-number">Point {{ match.pointHistory.length - index }}</span>
+                                            <span v-if="point.pointType" class="point-type-badge" :class="'type-' + point.pointType">{{ point.pointType }}</span>
+                                            <span v-else class="point-type-badge type-none">no type</span>
+                                            <span class="point-timestamp">{{ formatPointTime(point.timestamp) }}</span>
+                                        </div>
+                                        <div class="point-details">
+                                            <div class="point-winner">Winner: {{ match.players[point.winner].name }}</div>
+                                            <div class="point-score">Server: {{ match.players[point.server].name }}</div>
+                                            <div v-if="point.serveData" class="serve-info">
+                                                <span class="serve-detail">1st: {{ point.serveData.firstServe }}</span>
+                                                <span v-if="point.serveData.secondServe" class="serve-detail">2nd: {{ point.serveData.secondServe }}</span>
+                                            </div>
+                                            <div v-if="point.pointEnding" class="ending-info">
+                                                Final shot: {{ match.players[point.pointEnding.finalPlayer].name }} - {{ point.pointEnding.strokeType.replace('-', ' ') }}
+                                            </div>
+                                            <div v-if="point.comment" class="point-comment-display">{{ point.comment }}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Game Comment Modal -->
+            <div v-if="gameCommentModal.visible" class="modal" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Game Complete!</h3>
+                        <span class="close" @click="cancelGameComment">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="game-complete-info">
+                            <p>Would you like to add a comment about this game?</p>
+                        </div>
+                        <div class="game-comment-input">
+                            <textarea v-model="gameCommentModal.comment" placeholder="Add your thoughts about this game (optional)..." rows="4" class="mobile-friendly-textarea"></textarea>
+                        </div>
+                        <div class="game-comment-actions">
+                            <button @click="saveGameComment" class="save-comment-btn">Save & Continue</button>
+                            <button @click="cancelGameComment" class="skip-comment-btn">Skip</button>
                         </div>
                     </div>
                 </div>
@@ -651,7 +713,7 @@ createApp({
             // counters and statistics buckets.
             const players = {
                 1: {
-                    name: this.newMatch.player1 || 'Player 1',
+                    name: this.newMatch.player1 || '1',
                     sets: [0, 0, 0, 0, 0],
                     games: 0,
                     points: 0,
@@ -668,7 +730,7 @@ createApp({
                     }
                 },
                 2: {
-                    name: this.newMatch.player2 || 'Player 2',
+                    name: this.newMatch.player2 || '2',
                     sets: [0, 0, 0, 0, 0],
                     games: 0,
                     points: 0,
@@ -701,6 +763,8 @@ createApp({
                 pointHistory: [],
                 // tracks which player should serve the next game
                 gameStartServer: this.newMatch.firstServer,
+                // game comments storage
+                gameComments: {},
                 // local state preserved for in progress matches
                 isInProgress: true,
                 // Additional metadata for review
@@ -723,8 +787,9 @@ createApp({
             this.match = this.createMatch();
             // Hide any previous modals
             this.statsVisible = false;
-            this.setReviewVisible = false;
+            this.pointBreakdownVisible = false;
             this.endMatchModal.visible = false;
+            this.gameCommentModal.visible = false;
             // Show scoreboard
             this.stage = 'match';
         },
@@ -747,8 +812,9 @@ createApp({
             
             // Hide any previous modals
             this.statsVisible = false;
-            this.setReviewVisible = false;
+            this.pointBreakdownVisible = false;
             this.endMatchModal.visible = false;
+            this.gameCommentModal.visible = false;
             
             // Show scoreboard
             this.stage = 'match';
@@ -813,7 +879,8 @@ createApp({
                 gameStartServer: this.joinMatch.currentServer,
                 isInProgress: true,
                 winner: null,
-                finalSets: []
+                finalSets: [],
+                gameComments: {}
             };
         },
         /**
@@ -903,8 +970,9 @@ createApp({
             // Clear the active match and return to review
             this.match = null;
             this.statsVisible = false;
-            this.setReviewVisible = false;
+            this.pointBreakdownVisible = false;
             this.endMatchModal.visible = false;
+            this.gameCommentModal.visible = false;
             this.stage = 'review';
             // Reload matches to reflect any updates
             this.loadMatches();
@@ -938,7 +1006,8 @@ createApp({
                     gameStartServer: this.match.gameStartServer,
                     players: JSON.parse(JSON.stringify(this.match.players)),
                     setScores: JSON.parse(JSON.stringify(this.match.setScores)),
-                    pointHistory: JSON.parse(JSON.stringify(this.match.pointHistory))
+                    pointHistory: JSON.parse(JSON.stringify(this.match.pointHistory)),
+                    gameComments: JSON.parse(JSON.stringify(this.match.gameComments))
                 }
             };
             // Remove any existing match with the same id
@@ -1064,7 +1133,9 @@ createApp({
             this.serveModal.secondServe = '';
             this.serveModal.finalPlayer = null;
             this.serveModal.strokeType = '';
+            this.serveModal.pointType = '';
             this.serveModal.comment = '';
+            this.serveModal.pointType = '';
         },
         /**
          * Close the serve modal without recording a point.
@@ -1098,7 +1169,7 @@ createApp({
             this.serveModal.firstServe = outcome;
             if (outcome === 'ace' || outcome === 'unreturned') {
                 // Server wins outright
-                this.finalisePoint(this.match.server, { firstServe: outcome, secondServe: null }, null, this.serveModal.comment);
+                this.finalisePoint(this.match.server, { firstServe: outcome, secondServe: null }, null, this.serveModal.pointType, this.serveModal.comment);
                 this.closeServeModal();
             } else if (outcome === 'out') {
                 // Show second serve selection
@@ -1120,11 +1191,11 @@ createApp({
             if (outcome === 'double-fault') {
                 // Point to receiver
                 const receiver = this.match.server === 1 ? 2 : 1;
-                this.finalisePoint(receiver, { firstServe: 'out', secondServe: 'out' }, null, this.serveModal.comment);
+                this.finalisePoint(receiver, { firstServe: 'out', secondServe: 'out' }, null, this.serveModal.pointType, this.serveModal.comment);
                 this.closeServeModal();
             } else if (outcome === 'ace' || outcome === 'unreturned') {
                 // Server wins outright
-                this.finalisePoint(this.match.server, { firstServe: 'out', secondServe: outcome }, null, this.serveModal.comment);
+                this.finalisePoint(this.match.server, { firstServe: 'out', secondServe: outcome }, null, this.serveModal.pointType, this.serveModal.comment);
                 this.closeServeModal();
             } else if (outcome === 'in') {
                 // Proceed to point ending selection
@@ -1165,7 +1236,7 @@ createApp({
                 finalPlayer: this.serveModal.finalPlayer,
                 strokeType: stroke
             };
-            this.finalisePoint(winner, serveData, pointEnding, this.serveModal.comment);
+            this.finalisePoint(winner, serveData, pointEnding, this.serveModal.pointType, this.serveModal.comment);
             this.closeServeModal();
         },
         /**
@@ -1178,7 +1249,7 @@ createApp({
          * @param {object|null} pointEnding details of the final shot
          * @param {string} comment optional comment provided by the user
          */
-        finalisePoint(winner, serveData, pointEnding, comment) {
+        finalisePoint(winner, serveData, pointEnding, pointType, comment) {
             if (!this.match || this.match.matchComplete) return;
             // Capture the state before applying the point so it can be undone
             const before = {
@@ -1194,7 +1265,11 @@ createApp({
                 server: this.match.server,
                 serveData: serveData,
                 pointEnding: pointEnding,
+                pointType: pointType || '',
                 comment: comment || '',
+                timestamp: new Date().toISOString(),
+                gameNumber: this.match.players[1].games + this.match.players[2].games + 1,
+                setNumber: this.match.currentSet + 1,
                 before: before
             };
             // Push record to history
@@ -1207,6 +1282,11 @@ createApp({
             this.match.players[winner].points++;
             // Check for game win
             if (this.checkGameWin(winner)) {
+                // Show game comment modal after a brief delay
+                setTimeout(() => {
+                    this.showGameCommentModal();
+                }, 300);
+                
                 // Increment game count
                 this.match.players[winner].games++;
                 // Reset points
@@ -1384,11 +1464,41 @@ createApp({
             this.statsVisible = !this.statsVisible;
         },
         /**
-         * Show the set review modal. Summarises the completed sets and the
-         * current set if games have been played.
+         * Show the point breakdown modal. Displays point-by-point match history.
          */
-        showSetReview() {
-            this.setReviewVisible = true;
+        showPointBreakdown() {
+            this.pointBreakdownVisible = true;
+        },
+        
+        /**
+         * Show the game comment modal when a game is completed.
+         */
+        showGameCommentModal() {
+            this.gameCommentModal.visible = true;
+            this.gameCommentModal.comment = '';
+        },
+        
+        /**
+         * Save a comment for the completed game.
+         */
+        saveGameComment() {
+            if (this.gameCommentModal.comment.trim()) {
+                const gameKey = `set${this.match.currentSet + 1}_game${this.match.players[1].games + this.match.players[2].games}`;
+                this.match.gameComments[gameKey] = {
+                    comment: this.gameCommentModal.comment.trim(),
+                    timestamp: new Date().toISOString(),
+                    setNumber: this.match.currentSet + 1,
+                    gameNumber: this.match.players[1].games + this.match.players[2].games
+                };
+            }
+            this.gameCommentModal.visible = false;
+        },
+        
+        /**
+         * Cancel game comment entry.
+         */
+        cancelGameComment() {
+            this.gameCommentModal.visible = false;
         },
         /**
          * Show the end match modal. Used to record a reason for ending a
@@ -1528,7 +1638,24 @@ createApp({
                 this.updateServeStats(record);
                 this.updatePointStats(record);
             });
+            // Restore game comments if available
+            if (state.gameComments) {
+                this.match.gameComments = JSON.parse(JSON.stringify(state.gameComments));
+            }
             this.stage = 'match';
+        },
+        
+        /**
+         * Format timestamp for point display
+         */
+        formatPointTime(timestamp) {
+            if (!timestamp) return '';
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return '';
+            }
         },
         /**
          * Helper to return a formatted statistic. Percentages are shown as

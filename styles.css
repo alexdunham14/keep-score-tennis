@@ -1090,7 +1090,7 @@ h1 {
     background: #0056b3;
 }
 
-#set-review {
+#point-breakdown {
     padding: 10px 20px;
     background: #6f42c1;
     color: white;
@@ -1100,19 +1100,212 @@ h1 {
     font-size: 14px;
 }
 
-#set-review:hover {
+#point-breakdown:hover {
     background: #5a2d91;
 }
 
-/* Set Review Modal specific styling */
-#set-review-modal .modal-content {
-    max-width: 800px;
+/* Point Breakdown Modal */
+.point-breakdown-modal .modal-content {
+    max-width: 900px;
     width: 95%;
+    max-height: 90vh;
 }
 
-#set-review-content {
-    max-height: 60vh;
+.point-breakdown-content {
+    max-height: 70vh;
     overflow-y: auto;
+}
+
+.breakdown-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 2px solid #e9ecef;
+}
+
+.breakdown-summary h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+    color: #1e3a20;
+    border: 1px solid #ddd;
+}
+
+.points-list h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.point-history-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.point-entry {
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px;
+    transition: background-color 0.2s ease;
+}
+
+.point-entry:hover {
+    background: #f8f9fa;
+}
+
+.point-entry:last-child {
+    border-bottom: none;
+}
+
+.point-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.point-number {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1em;
+}
+
+.point-type-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.point-type-badge.type-short {
+    background: #28a745;
+    color: white;
+}
+
+.point-type-badge.type-medium {
+    background: #ffc107;
+    color: #212529;
+}
+
+.point-type-badge.type-long {
+    background: #dc3545;
+    color: white;
+}
+
+.point-type-badge.type-none {
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.point-timestamp {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.point-details {
+    display: grid;
+    gap: 5px;
+}
+
+.point-winner {
+    font-weight: bold;
+    color: #1e3a20;
+}
+
+.point-score {
+    color: #495057;
+    font-size: 0.9em;
+}
+
+.serve-info {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9em;
+    color: var(--primary-color);
+}
+
+.serve-detail {
+    background: rgba(47, 128, 237, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.ending-info {
+    font-size: 0.9em;
+    color: #28a745;
+    font-style: italic;
+}
+
+.point-comment-display {
+    background: #fff3cd;
+    padding: 8px;
+    border-radius: 4px;
+    font-style: italic;
+    border-left: 4px solid #ffc107;
+    margin-top: 5px;
+}
+
+/* Point Type Selection */
+.point-type-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.point-type-section h4 {
+    color: #1e3a20;
+    margin-bottom: 15px;
+    font-size: 1em;
+}
+
+.point-type-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.point-type-btn {
+    padding: 12px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.point-type-btn:hover {
+    background: #5a6268;
+}
+
+.point-type-btn.selected {
+    background: var(--primary-color);
+    transform: scale(1.05);
 }
 
 /* Point Comment Section */
@@ -1128,15 +1321,36 @@ h1 {
     font-size: 1em;
 }
 
+.mobile-friendly-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 16px;
+    resize: vertical;
+    background: #fafafa;
+    transition: all 0.2s ease;
+}
+
+.mobile-friendly-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+}
+
 #point-comment {
     width: 100%;
-    min-height: 50px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
+    min-height: 80px;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 16px;
     resize: vertical;
+    background: #fafafa;
 }
 
 /* Point History */
@@ -1772,8 +1986,60 @@ h1 {
         min-height: 44px;
     }
     
-    #point-comment {
+    .mobile-friendly-textarea {
         font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 100px;
+        padding: 20px;
+    }
+    
+    .point-type-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .point-type-btn {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
+    /* Point Breakdown Modal Mobile */
+    .point-breakdown-modal .modal-content {
+        width: 98%;
+        max-height: 95vh;
+    }
+    
+    .summary-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .stat-item {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .point-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .serve-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    /* Game Comment Modal Mobile */
+    .game-comment-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .save-comment-btn, .skip-comment-btn {
+        width: 100%;
+        padding: 16px;
+        min-height: 50px;
     }
     
     /* Add Game Modal Mobile */
@@ -2030,6 +2296,61 @@ h1 {
     }
 }
 
+/* Game Comment Modal */
+.game-complete-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.game-complete-info p {
+    font-size: 1.1em;
+    color: #1e3a20;
+    margin: 0;
+}
+
+.game-comment-input {
+    margin-bottom: 20px;
+}
+
+.game-comment-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.save-comment-btn {
+    padding: 12px 24px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.save-comment-btn:hover {
+    background: #1c5fc8;
+    transform: translateY(-1px);
+}
+
+.skip-comment-btn {
+    padding: 12px 24px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.skip-comment-btn:hover {
+    background: #5a6268;
+}
+
 /* Extra small screens (phones in portrait) */
 @media (max-width: 480px) {
     .container {
@@ -2077,5 +2398,14 @@ h1 {
     .player-btn {
         padding: 12px;
         font-size: 12px;
+    }
+    
+    .summary-stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .point-type-buttons {
+        gap: 6px;
     }
 }
