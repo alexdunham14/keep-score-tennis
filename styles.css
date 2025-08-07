@@ -252,6 +252,37 @@ h1 {
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
+.match-action-buttons {
+    margin: 25px 0 20px 0;
+    text-align: center;
+}
+
+.cancel-button-container {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+    text-align: center;
+}
+
+.cancel-button {
+    padding: 10px 24px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.cancel-button:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
 .server-selection {
     margin: 20px 0;
 }
@@ -1267,6 +1298,219 @@ h1 {
     margin-top: 5px;
 }
 
+/* Sets and Games Breakdown */
+.sets-breakdown {
+    margin-top: 20px;
+}
+
+.set-container {
+    background: white;
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.set-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.set-header h4 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.set-info {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.set-winner {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+}
+
+.set-score {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.set-status {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-style: italic;
+}
+
+.games-container {
+    padding: 15px;
+}
+
+.game-container {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.game-header {
+    background: #1e3a20;
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.game-header h5 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.game-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 0.85em;
+}
+
+.game-winner {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.game-status {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-style: italic;
+}
+
+.game-points-count {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.game-points {
+    padding: 10px 15px;
+    display: grid;
+    gap: 8px;
+}
+
+.point-entry-compact {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.point-entry-compact:hover {
+    background: #f0f4f8;
+}
+
+.point-compact-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+}
+
+.point-number-compact {
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.point-type-badge-small {
+    background: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.7em;
+    font-weight: bold;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.point-type-badge-small.type-short {
+    background: #28a745;
+}
+
+.point-type-badge-small.type-medium {
+    background: #ffc107;
+    color: #212529;
+}
+
+.point-type-badge-small.type-long {
+    background: #dc3545;
+}
+
+.point-winner-compact {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.point-server-compact {
+    color: #6c757d;
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+.point-serve-compact {
+    font-size: 0.85em;
+    color: #28a745;
+    margin: 3px 0;
+}
+
+.serve-result {
+    background: rgba(40, 167, 69, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.point-ending-compact {
+    font-size: 0.85em;
+    color: #dc3545;
+    font-style: italic;
+    margin: 3px 0;
+}
+
+.point-comment-compact {
+    background: #fff3cd;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-style: italic;
+    font-size: 0.85em;
+    margin-top: 5px;
+    border-left: 3px solid #ffc107;
+}
+
 /* Point Type Selection */
 .point-type-section {
     margin-top: 20px;
@@ -1564,22 +1808,58 @@ h1 {
 
 .set-input {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 10px;
 }
 
-.set-input label {
+.set-input > label {
     font-weight: bold;
-    min-width: 60px;
     color: #1e3a20;
+    font-size: 1.1em;
 }
 
-.set-input input {
-    width: 60px;
-    padding: 6px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.score-input-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.player-score-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.player-label {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 0.9em;
     text-align: center;
+}
+
+.player-score-input input {
+    width: 60px;
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.player-score-input input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+}
+
+.score-separator {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #6c757d;
+    margin: 0 10px;
 }
 
 .game-score-inputs {
@@ -1595,10 +1875,13 @@ h1 {
     gap: 10px;
 }
 
-.game-score-input label {
+.game-player-label {
     font-weight: bold;
-    min-width: 80px;
-    color: #1e3a20;
+    color: var(--primary-color);
+    font-size: 1em;
+    margin-right: 10px;
+    min-width: 30px;
+    display: inline-block;
 }
 
 .game-score-input select {
@@ -2019,14 +2302,31 @@ h1 {
         font-size: 14px;
     }
     
-    .point-header {
+    .set-header {
         flex-direction: column;
-        align-items: flex-start;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .set-info {
+        flex-direction: column;
         gap: 5px;
     }
     
-    .serve-info {
+    .game-header {
         flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .game-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .point-compact-header {
+        flex-direction: column;
+        align-items: flex-start;
         gap: 5px;
     }
     
@@ -2403,6 +2703,18 @@ h1 {
     .summary-stats {
         grid-template-columns: 1fr;
         gap: 8px;
+    }
+    
+    .games-container {
+        padding: 10px;
+    }
+    
+    .game-points {
+        padding: 8px 10px;
+    }
+    
+    .point-entry-compact {
+        padding: 8px;
     }
     
     .point-type-buttons {

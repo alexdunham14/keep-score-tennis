@@ -230,7 +230,9 @@ createApp({
                             </div>
                         </div>
                         <!-- Emit start-match event instead of calling parent method -->
-                        <button id="start-match" @click="$emit('start-match')">Start Match</button>
+                        <div class="match-action-buttons">
+                            <button id="start-match" @click="$emit('start-match')">Start Match</button>
+                        </div>
                     </div>
                     <!-- Join Match in Progress -->
                     <div v-if="matchStartType === 'join'">
@@ -268,17 +270,25 @@ createApp({
                                 <div class="sets-input-grid">
                                     <div v-for="n in joinMatch.matchFormat" :key="'set'+n" class="set-input" v-show="n <= Math.min(joinMatch.matchFormat, 5)">
                                         <label>Set {{ n }}:</label>
-                                        <input type="number" v-model.number="joinMatch.setScores[n-1].p1" min="0" max="20" placeholder="0">
-                                        <span>-</span>
-                                        <input type="number" v-model.number="joinMatch.setScores[n-1].p2" min="0" max="20" placeholder="0">
+                                        <div class="score-input-container">
+                                            <div class="player-score-input">
+                                                <label class="player-label">{{ joinMatch.player1 || '1' }}</label>
+                                                <input type="number" v-model.number="joinMatch.setScores[n-1].p1" min="0" max="20" placeholder="0">
+                                            </div>
+                                            <span class="score-separator">-</span>
+                                            <div class="player-score-input">
+                                                <label class="player-label">{{ joinMatch.player2 || '2' }}</label>
+                                                <input type="number" v-model.number="joinMatch.setScores[n-1].p2" min="0" max="20" placeholder="0">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="current-game">
-                                <h5>Current Game:</h5>
+                                <h5>Current Game Points:</h5>
                                 <div class="game-score-inputs">
                                     <div class="game-score-input">
-                                        <label>{{ joinMatch.player1 }} points:</label>
+                                        <label class="game-player-label">{{ joinMatch.player1 || '1' }}:</label>
                                         <select v-model="joinMatch.currentPoints.p1">
                                             <option value="0">0</option>
                                             <option value="1">15</option>
@@ -288,7 +298,7 @@ createApp({
                                         </select>
                                     </div>
                                     <div class="game-score-input">
-                                        <label>{{ joinMatch.player2 }} points:</label>
+                                        <label class="game-player-label">{{ joinMatch.player2 || '2' }}:</label>
                                         <select v-model="joinMatch.currentPoints.p2">
                                             <option value="0">0</option>
                                             <option value="1">15</option>
@@ -308,9 +318,13 @@ createApp({
                             </div>
                         </div>
                         <!-- Emit start-join-match event instead of calling parent method -->
-                        <button id="join-match" @click="$emit('start-join-match')">Join Match</button>
+                        <div class="match-action-buttons">
+                            <button id="join-match" @click="$emit('start-join-match')">Join Match</button>
+                        </div>
                     </div>
-                    <button style="margin-left:10px;" @click="$emit('cancel')">Cancel</button>
+                    <div class="cancel-button-container">
+                        <button class="cancel-button" @click="$emit('cancel')">Cancel</button>
+                    </div>
                 </div>
             `
         }
@@ -492,7 +506,7 @@ createApp({
             <div v-if="pointBreakdownVisible" class="modal" style="display:block;">
                 <div class="modal-content point-breakdown-modal">
                     <div class="modal-header">
-                        <h3>Point-by-Point Breakdown</h3>
+                        <h3>Match Breakdown</h3>
                         <span class="close" @click="pointBreakdownVisible = false">&times;</span>
                     </div>
                     <div class="modal-body">
@@ -510,27 +524,49 @@ createApp({
                                     <div class="stat-item">No Type: {{ match.pointHistory.filter(p => !p.pointType).length }}</div>
                                 </div>
                             </div>
-                            <div class="points-list">
-                                <h4>Point History</h4>
-                                <div class="point-history-container">
-                                    <div v-for="(point, index) in match.pointHistory.slice().reverse()" :key="index" class="point-entry">
-                                        <div class="point-header">
-                                            <span class="point-number">Point {{ match.pointHistory.length - index }}</span>
-                                            <span v-if="point.pointType" class="point-type-badge" :class="'type-' + point.pointType">{{ point.pointType }}</span>
-                                            <span v-else class="point-type-badge type-none">no type</span>
-                                            <span class="point-timestamp">{{ formatPointTime(point.timestamp) }}</span>
+                            
+                            <!-- Set by Set Breakdown -->
+                            <div class="sets-breakdown">
+                                <div v-for="set in organizedPointHistory" :key="'set' + set.setNumber" class="set-container">
+                                    <div class="set-header">
+                                        <h4>Set {{ set.setNumber }}</h4>
+                                        <div class="set-info">
+                                            <span class="set-winner" v-if="set.winner !== 'In Progress'">Winner: {{ set.winner }}</span>
+                                            <span class="set-score" v-if="set.finalScore">{{ set.finalScore }}</span>
+                                            <span class="set-status" v-else>In Progress</span>
                                         </div>
-                                        <div class="point-details">
-                                            <div class="point-winner">Winner: {{ match.players[point.winner].name }}</div>
-                                            <div class="point-score">Server: {{ match.players[point.server].name }}</div>
-                                            <div v-if="point.serveData" class="serve-info">
-                                                <span class="serve-detail">1st: {{ point.serveData.firstServe }}</span>
-                                                <span v-if="point.serveData.secondServe" class="serve-detail">2nd: {{ point.serveData.secondServe }}</span>
+                                    </div>
+                                    
+                                    <!-- Games within this set -->
+                                    <div class="games-container">
+                                        <div v-for="game in set.games" :key="'game' + game.gameNumber" class="game-container">
+                                            <div class="game-header">
+                                                <h5>Game {{ game.gameNumber }}</h5>
+                                                <div class="game-info">
+                                                    <span class="game-winner" v-if="game.winner !== 'In Progress'">{{ game.winner }}</span>
+                                                    <span class="game-status" v-else>In Progress</span>
+                                                    <span class="game-points-count">{{ game.points.length }} point{{ game.points.length !== 1 ? 's' : '' }}</span>
+                                                </div>
                                             </div>
-                                            <div v-if="point.pointEnding" class="ending-info">
-                                                Final shot: {{ match.players[point.pointEnding.finalPlayer].name }} - {{ point.pointEnding.strokeType.replace('-', ' ') }}
+                                            
+                                            <!-- Points within this game -->
+                                            <div class="game-points">
+                                                <div v-for="point in game.points" :key="'point' + point.timestamp" class="point-entry-compact">
+                                                    <div class="point-compact-header">
+                                                        <span class="point-number-compact">{{ point.pointNumber }}</span>
+                                                        <span v-if="point.pointType" class="point-type-badge-small" :class="'type-' + point.pointType">{{ point.pointType[0].toUpperCase() }}</span>
+                                                        <span class="point-winner-compact">{{ match.players[point.winner].name }}</span>
+                                                        <span class="point-server-compact">served by {{ match.players[point.server].name }}</span>
+                                                    </div>
+                                                    <div v-if="point.serveData" class="point-serve-compact">
+                                                        <span class="serve-result">{{ point.serveData.firstServe }}{{ point.serveData.secondServe ? (', ' + point.serveData.secondServe) : '' }}</span>
+                                                    </div>
+                                                    <div v-if="point.pointEnding" class="point-ending-compact">
+                                                        {{ match.players[point.pointEnding.finalPlayer].name }} {{ point.pointEnding.strokeType.replace('-', ' ') }}
+                                                    </div>
+                                                    <div v-if="point.comment" class="point-comment-compact">{{ point.comment }}</div>
+                                                </div>
                                             </div>
-                                            <div v-if="point.comment" class="point-comment-display">{{ point.comment }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -631,6 +667,84 @@ createApp({
             const setsWon1 = this.match.players[1].sets.reduce((s, v) => s + (v ? 1 : 0), 0);
             const setsWon2 = this.match.players[2].sets.reduce((s, v) => s + (v ? 1 : 0), 0);
             return setsWon1 > setsWon2 ? this.match.players[1].name : this.match.players[2].name;
+        },
+        
+        /**
+         * Organizes point history by sets and games for the point breakdown modal.
+         */
+        organizedPointHistory() {
+            if (!this.match || !this.match.pointHistory) return [];
+            
+            const organized = [];
+            let currentSet = 1;
+            let currentGame = 1;
+            let gamePoints = [];
+            let setGames = [];
+            
+            this.match.pointHistory.forEach((point, index) => {
+                // Add point to current game
+                gamePoints.push({
+                    ...point,
+                    pointNumber: gamePoints.length + 1
+                });
+                
+                // Check if this point completed a game (by looking at the next point's game context)
+                const nextPoint = this.match.pointHistory[index + 1];
+                const gameEnded = !nextPoint || nextPoint.gameNumber !== point.gameNumber;
+                
+                if (gameEnded) {
+                    // Determine game winner by looking at who won the last point of the game
+                    const gameWinner = this.match.players[point.winner].name;
+                    
+                    setGames.push({
+                        gameNumber: currentGame,
+                        points: [...gamePoints],
+                        winner: gameWinner,
+                        setNumber: currentSet
+                    });
+                    
+                    gamePoints = [];
+                    currentGame++;
+                    
+                    // Check if this game completed a set
+                    const setEnded = nextPoint && nextPoint.setNumber !== point.setNumber;
+                    
+                    if (setEnded || !nextPoint) {
+                        const setWinner = this.determineSetWinner(setGames, currentSet);
+                        organized.push({
+                            setNumber: currentSet,
+                            games: [...setGames],
+                            winner: setWinner,
+                            finalScore: this.getSetFinalScore(currentSet)
+                        });
+                        
+                        setGames = [];
+                        currentSet++;
+                        currentGame = 1;
+                    }
+                }
+            });
+            
+            // Handle current incomplete game/set
+            if (gamePoints.length > 0) {
+                setGames.push({
+                    gameNumber: currentGame,
+                    points: [...gamePoints],
+                    winner: 'In Progress',
+                    setNumber: currentSet
+                });
+            }
+            
+            if (setGames.length > 0) {
+                organized.push({
+                    setNumber: currentSet,
+                    games: [...setGames],
+                    winner: 'In Progress',
+                    finalScore: null
+                });
+            }
+            
+            return organized;
         }
     },
     methods: {
@@ -1168,8 +1282,8 @@ createApp({
         selectFirstServe(outcome) {
             this.serveModal.firstServe = outcome;
             if (outcome === 'ace' || outcome === 'unreturned') {
-                // Server wins outright
-                this.finalisePoint(this.match.server, { firstServe: outcome, secondServe: null }, null, this.serveModal.pointType, this.serveModal.comment);
+                // Server wins outright - automatically set as short point
+                this.finalisePoint(this.match.server, { firstServe: outcome, secondServe: null }, null, 'short', this.serveModal.comment);
                 this.closeServeModal();
             } else if (outcome === 'out') {
                 // Show second serve selection
@@ -1189,13 +1303,13 @@ createApp({
         selectSecondServe(outcome) {
             this.serveModal.secondServe = outcome;
             if (outcome === 'double-fault') {
-                // Point to receiver
+                // Point to receiver - automatically set as short point
                 const receiver = this.match.server === 1 ? 2 : 1;
-                this.finalisePoint(receiver, { firstServe: 'out', secondServe: 'out' }, null, this.serveModal.pointType, this.serveModal.comment);
+                this.finalisePoint(receiver, { firstServe: 'out', secondServe: 'out' }, null, 'short', this.serveModal.comment);
                 this.closeServeModal();
             } else if (outcome === 'ace' || outcome === 'unreturned') {
-                // Server wins outright
-                this.finalisePoint(this.match.server, { firstServe: 'out', secondServe: outcome }, null, this.serveModal.pointType, this.serveModal.comment);
+                // Server wins outright - automatically set as short point
+                this.finalisePoint(this.match.server, { firstServe: 'out', secondServe: outcome }, null, 'short', this.serveModal.comment);
                 this.closeServeModal();
             } else if (outcome === 'in') {
                 // Proceed to point ending selection
@@ -1656,6 +1770,47 @@ createApp({
             } catch (e) {
                 return '';
             }
+        },
+        
+        /**
+         * Determine the winner of a set based on its games
+         */
+        determineSetWinner(games, setNumber) {
+            if (!games.length) return 'Unknown';
+            
+            // If we have completed set scores, use those
+            if (this.match.setScores && this.match.setScores[setNumber - 1]) {
+                const setScore = this.match.setScores[setNumber - 1];
+                if (setScore.p1Games > setScore.p2Games) {
+                    return this.match.players[1].name;
+                } else if (setScore.p2Games > setScore.p1Games) {
+                    return this.match.players[2].name;
+                }
+            }
+            
+            // Otherwise count games won
+            let p1Games = 0;
+            let p2Games = 0;
+            
+            games.forEach(game => {
+                if (game.winner === this.match.players[1].name) p1Games++;
+                else if (game.winner === this.match.players[2].name) p2Games++;
+            });
+            
+            if (p1Games > p2Games) return this.match.players[1].name;
+            if (p2Games > p1Games) return this.match.players[2].name;
+            return 'Tied';
+        },
+        
+        /**
+         * Get the final score for a completed set
+         */
+        getSetFinalScore(setNumber) {
+            if (this.match.setScores && this.match.setScores[setNumber - 1]) {
+                const setScore = this.match.setScores[setNumber - 1];
+                return `${setScore.p1Games}-${setScore.p2Games}`;
+            }
+            return null;
         },
         /**
          * Helper to return a formatted statistic. Percentages are shown as
