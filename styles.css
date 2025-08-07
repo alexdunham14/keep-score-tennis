@@ -171,6 +171,7 @@ h1 {
 /* Match Details Section */
 .match-details {
     margin-bottom: 25px;
+    text-align: center;
 }
 
 .match-details h4 {
@@ -195,6 +196,7 @@ h1 {
 
 .players-section {
     margin-bottom: 20px;
+    text-align: center;
 }
 
 .players-section h4 {
@@ -285,6 +287,7 @@ h1 {
 
 .server-selection {
     margin: 20px 0;
+    text-align: center;
 }
 
 .server-selection h4 {
@@ -302,6 +305,7 @@ h1 {
 
 .match-start-option {
     margin: 20px 0;
+    text-align: center;
 }
 
 .match-start-option h4 {
@@ -345,6 +349,8 @@ h1 {
 .match-format {
     display: flex;
     gap: 20px;
+    justify-content: center;
+    margin: 20px 0;
 }
 
 .match-format label {
@@ -1779,6 +1785,7 @@ h1 {
     background: #f8f9fa;
     border: 2px solid #10b981;
     border-radius: 8px;
+    text-align: center;
 }
 
 .current-match-state h4 {
@@ -1953,14 +1960,77 @@ h1 {
 }
 
 /* End Match Modal */
-.end-match-reason, .match-winner-selection, .end-match-comment {
+.end-match-reason, .end-match-sets, .match-winner-selection, .end-match-comment {
     margin-bottom: 20px;
 }
 
-.end-match-reason h4, .match-winner-selection h4, .end-match-comment h4 {
+.end-match-reason h4, .end-match-sets h4, .match-winner-selection h4, .end-match-comment h4 {
     color: #1e3a20;
     margin-bottom: 10px;
     font-size: 1em;
+}
+
+.end-match-sets-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.end-set-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.end-set-input > label {
+    font-weight: bold;
+    color: #1e3a20;
+    font-size: 1em;
+}
+
+.end-score-input-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.end-player-score-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.end-player-label {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.end-player-score-input input {
+    width: 60px;
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.end-player-score-input input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+}
+
+.end-score-separator {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #6c757d;
+    margin: 0 10px;
 }
 
 #end-reason {
@@ -2342,6 +2412,41 @@ h1 {
         min-height: 50px;
     }
     
+    /* Fast Forward Modal Mobile */
+    .fast-forward-modal .modal-content {
+        width: 98%;
+    }
+    
+    .fast-forward-game-inputs {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .fast-forward-game-input {
+        justify-content: space-between;
+    }
+    
+    .fast-forward-server-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .fast-forward-server-btn {
+        padding: 16px;
+        min-height: 50px;
+    }
+    
+    .fast-forward-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .apply-fast-forward-btn, .cancel-fast-forward-btn {
+        width: 100%;
+        padding: 16px;
+        min-height: 50px;
+    }
+    
     /* Add Game Modal Mobile */
     .game-winner-buttons {
         grid-template-columns: 1fr;
@@ -2649,6 +2754,246 @@ h1 {
 
 .skip-comment-btn:hover {
     background: #5a6268;
+}
+
+/* Fast Forward Modal */
+.fast-forward-modal .modal-content {
+    max-width: 600px;
+    width: 95%;
+}
+
+.fast-forward-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.fast-forward-info p {
+    margin: 0;
+    color: #1e3a20;
+    font-weight: 500;
+}
+
+.fast-forward-sets {
+    margin-bottom: 25px;
+}
+
+.fast-forward-sets h4 {
+    color: #1e3a20;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.fast-forward-sets-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.fast-forward-set-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fast-forward-set-input > label {
+    font-weight: bold;
+    color: #1e3a20;
+    font-size: 1em;
+}
+
+.fast-forward-score-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.fast-forward-player-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.fast-forward-player-label {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.fast-forward-player-score input {
+    width: 60px;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.fast-forward-player-score input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+}
+
+.fast-forward-separator {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #6c757d;
+    margin: 0 10px;
+}
+
+.fast-forward-current-game {
+    margin-bottom: 25px;
+}
+
+.fast-forward-current-game h4 {
+    color: #1e3a20;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.fast-forward-game-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.fast-forward-game-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.fast-forward-game-label {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1em;
+    min-width: 30px;
+}
+
+.fast-forward-game-input select {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    background: white;
+    min-width: 100px;
+}
+
+.fast-forward-game-input select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
+}
+
+.fast-forward-server {
+    margin-bottom: 25px;
+}
+
+.fast-forward-server h4 {
+    color: #1e3a20;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.fast-forward-server-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.fast-forward-server-btn {
+    padding: 12px 20px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.fast-forward-server-btn:hover {
+    background: #5a6268;
+}
+
+.fast-forward-server-btn.selected {
+    background: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.fast-forward-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.apply-fast-forward-btn {
+    padding: 12px 24px;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.apply-fast-forward-btn:hover {
+    background: #218c50;
+    transform: translateY(-1px);
+}
+
+.cancel-fast-forward-btn {
+    padding: 12px 24px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.cancel-fast-forward-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+#fast-forward {
+    padding: 8px 16px;
+    background: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+#fast-forward:hover {
+    background: #138496;
+    transform: translateY(-1px);
+}
+
+#fast-forward:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Extra small screens (phones in portrait) */

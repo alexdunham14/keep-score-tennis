@@ -99,6 +99,19 @@ createApp({
                 visible: false,
                 comment: ''
             },
+            // Fast forward modal state
+            fastForwardModal: {
+                visible: false,
+                setScores: [
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 }
+                ],
+                currentPoints: { p1: 0, p2: 0 },
+                currentServer: 1
+            },
             // Flag to show/hide the statistics panel
             statsVisible: false,
             // Flag to show/hide the point breakdown modal
@@ -108,7 +121,14 @@ createApp({
                 visible: false,
                 reason: 'completed',
                 winner: null,
-                notes: ''
+                notes: '',
+                setScores: [
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 },
+                    { p1: 0, p2: 0 }
+                ]
             }
         };
     },
@@ -414,6 +434,7 @@ createApp({
                     <div class="review-controls">
                         <button id="show-stats" @click="toggleStats">Match Stats</button>
                         <button id="point-breakdown" @click="showPointBreakdown">Point Breakdown</button>
+                        <button id="fast-forward" @click="showFastForwardModal" :disabled="match.matchComplete">Fast Forward</button>
                     </div>
                 </div>
                 <div class="serve-stats" v-if="statsVisible">
@@ -615,6 +636,25 @@ createApp({
                                 <option value="other">Other reason</option>
                             </select>
                         </div>
+                        <div class="end-match-sets">
+                            <h4>Final Set Scores:</h4>
+                            <div class="end-match-sets-grid">
+                                <div v-for="n in match.matchFormat" :key="'endset'+n" class="end-set-input" v-show="n <= Math.min(match.matchFormat, 5)">
+                                    <label>Set {{ n }}:</label>
+                                    <div class="end-score-input-container">
+                                        <div class="end-player-score-input">
+                                            <label class="end-player-label">{{ match.players[1].name }}</label>
+                                            <input type="number" v-model.number="endMatchModal.setScores[n-1].p1" min="0" max="20" placeholder="0">
+                                        </div>
+                                        <span class="end-score-separator">-</span>
+                                        <div class="end-player-score-input">
+                                            <label class="end-player-label">{{ match.players[2].name }}</label>
+                                            <input type="number" v-model.number="endMatchModal.setScores[n-1].p2" min="0" max="20" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="match-winner-selection">
                             <h4>Who won the match?</h4>
                             <div class="winner-buttons">
@@ -625,11 +665,84 @@ createApp({
                         </div>
                         <div class="end-match-comment">
                             <h4>Additional Notes (Optional):</h4>
-                            <textarea v-model="endMatchModal.notes" placeholder="Any additional notes about how/why the match ended..." rows="3"></textarea>
+                            <textarea v-model="endMatchModal.notes" placeholder="Any additional notes about how/why the match ended..." rows="4" class="mobile-friendly-textarea"></textarea>
                         </div>
                         <div class="end-match-actions" style="margin-top:15px;">
                             <button id="confirm-end-match" @click="confirmEndMatch">End Match</button>
                             <button id="cancel-end-match" @click="endMatchModal.visible = false">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Fast Forward Modal -->
+            <div v-if="fastForwardModal.visible" class="modal" style="display:block;">
+                <div class="modal-content fast-forward-modal">
+                    <div class="modal-header">
+                        <h3>Fast Forward Match</h3>
+                        <span class="close" @click="cancelFastForward">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="fast-forward-info">
+                            <p>Update the match to the current state. Enter the actual scores from where you left off:</p>
+                        </div>
+                        
+                        <div class="fast-forward-sets">
+                            <h4>Set Scores:</h4>
+                            <div class="fast-forward-sets-grid">
+                                <div v-for="n in match.matchFormat" :key="'ffset'+n" class="fast-forward-set-input" v-show="n <= Math.min(match.matchFormat, 5)">
+                                    <label>Set {{ n }}:</label>
+                                    <div class="fast-forward-score-container">
+                                        <div class="fast-forward-player-score">
+                                            <label class="fast-forward-player-label">{{ match.players[1].name }}</label>
+                                            <input type="number" v-model.number="fastForwardModal.setScores[n-1].p1" min="0" max="20" placeholder="0">
+                                        </div>
+                                        <span class="fast-forward-separator">-</span>
+                                        <div class="fast-forward-player-score">
+                                            <label class="fast-forward-player-label">{{ match.players[2].name }}</label>
+                                            <input type="number" v-model.number="fastForwardModal.setScores[n-1].p2" min="0" max="20" placeholder="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="fast-forward-current-game">
+                            <h4>Current Game Points:</h4>
+                            <div class="fast-forward-game-inputs">
+                                <div class="fast-forward-game-input">
+                                    <label class="fast-forward-game-label">{{ match.players[1].name }}:</label>
+                                    <select v-model="fastForwardModal.currentPoints.p1">
+                                        <option value="0">0</option>
+                                        <option value="1">15</option>
+                                        <option value="2">30</option>
+                                        <option value="3">40</option>
+                                        <option value="4">40+ (Ad)</option>
+                                    </select>
+                                </div>
+                                <div class="fast-forward-game-input">
+                                    <label class="fast-forward-game-label">{{ match.players[2].name }}:</label>
+                                    <select v-model="fastForwardModal.currentPoints.p2">
+                                        <option value="0">0</option>
+                                        <option value="1">15</option>
+                                        <option value="2">30</option>
+                                        <option value="3">40</option>
+                                        <option value="4">40+ (Ad)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="fast-forward-server">
+                            <h4>Who is currently serving?</h4>
+                            <div class="fast-forward-server-buttons">
+                                <button class="fast-forward-server-btn" :class="{'selected': fastForwardModal.currentServer === 1}" @click="fastForwardModal.currentServer = 1">{{ match.players[1].name }}</button>
+                                <button class="fast-forward-server-btn" :class="{'selected': fastForwardModal.currentServer === 2}" @click="fastForwardModal.currentServer = 2">{{ match.players[2].name }}</button>
+                            </div>
+                        </div>
+                        
+                        <div class="fast-forward-actions">
+                            <button @click="applyFastForward" class="apply-fast-forward-btn">Update Match</button>
+                            <button @click="cancelFastForward" class="cancel-fast-forward-btn">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -904,6 +1017,7 @@ createApp({
             this.pointBreakdownVisible = false;
             this.endMatchModal.visible = false;
             this.gameCommentModal.visible = false;
+            this.fastForwardModal.visible = false;
             // Show scoreboard
             this.stage = 'match';
         },
@@ -929,6 +1043,7 @@ createApp({
             this.pointBreakdownVisible = false;
             this.endMatchModal.visible = false;
             this.gameCommentModal.visible = false;
+            this.fastForwardModal.visible = false;
             
             // Show scoreboard
             this.stage = 'match';
@@ -1087,6 +1202,7 @@ createApp({
             this.pointBreakdownVisible = false;
             this.endMatchModal.visible = false;
             this.gameCommentModal.visible = false;
+            this.fastForwardModal.visible = false;
             this.stage = 'review';
             // Reload matches to reflect any updates
             this.loadMatches();
@@ -1614,6 +1730,117 @@ createApp({
         cancelGameComment() {
             this.gameCommentModal.visible = false;
         },
+        
+        /**
+         * Show the fast forward modal to update match state.
+         */
+        showFastForwardModal() {
+            if (!this.match || this.match.matchComplete) return;
+            
+            // Pre-populate with current state
+            for (let i = 0; i < 5; i++) {
+                if (i < this.match.setScores.length) {
+                    this.fastForwardModal.setScores[i] = {
+                        p1: this.match.setScores[i].p1Games,
+                        p2: this.match.setScores[i].p2Games
+                    };
+                } else if (i === this.match.currentSet && (this.match.players[1].games > 0 || this.match.players[2].games > 0)) {
+                    // Current set in progress
+                    this.fastForwardModal.setScores[i] = {
+                        p1: this.match.players[1].games,
+                        p2: this.match.players[2].games
+                    };
+                } else {
+                    this.fastForwardModal.setScores[i] = { p1: 0, p2: 0 };
+                }
+            }
+            
+            this.fastForwardModal.currentPoints = {
+                p1: this.match.players[1].points,
+                p2: this.match.players[2].points
+            };
+            
+            this.fastForwardModal.currentServer = this.match.server;
+            this.fastForwardModal.visible = true;
+        },
+        
+        /**
+         * Apply the fast forward changes to the match.
+         */
+        applyFastForward() {
+            if (!this.match) return;
+            
+            // Update set scores and determine current set
+            const newSetScores = [];
+            const newPlayerSets = { 1: [0, 0, 0, 0, 0], 2: [0, 0, 0, 0, 0] };
+            let currentSet = 0;
+            let currentP1Games = 0;
+            let currentP2Games = 0;
+            
+            for (let i = 0; i < this.match.matchFormat; i++) {
+                const setScore = this.fastForwardModal.setScores[i];
+                if (setScore.p1 > 0 || setScore.p2 > 0) {
+                    // Check if this set is complete
+                    if (this.isSetComplete(setScore.p1, setScore.p2)) {
+                        newSetScores.push({
+                            p1Games: setScore.p1,
+                            p2Games: setScore.p2
+                        });
+                        
+                        // Award set to winner
+                        if (setScore.p1 > setScore.p2) {
+                            newPlayerSets[1][i] = 1;
+                        } else if (setScore.p2 > setScore.p1) {
+                            newPlayerSets[2][i] = 1;
+                        }
+                        
+                        currentSet = i + 1;
+                    } else {
+                        // This is the current set in progress
+                        currentP1Games = setScore.p1;
+                        currentP2Games = setScore.p2;
+                        currentSet = i;
+                        break;
+                    }
+                } else {
+                    // No more sets with scores
+                    break;
+                }
+            }
+            
+            // Update match state
+            this.match.setScores = newSetScores;
+            this.match.players[1].sets = newPlayerSets[1];
+            this.match.players[2].sets = newPlayerSets[2];
+            this.match.currentSet = currentSet;
+            this.match.players[1].games = currentP1Games;
+            this.match.players[2].games = currentP2Games;
+            this.match.players[1].points = this.fastForwardModal.currentPoints.p1;
+            this.match.players[2].points = this.fastForwardModal.currentPoints.p2;
+            this.match.server = this.fastForwardModal.currentServer;
+            
+            // Check if match is now complete
+            const setsWon1 = this.match.players[1].sets.reduce((s, v) => s + (v ? 1 : 0), 0);
+            const setsWon2 = this.match.players[2].sets.reduce((s, v) => s + (v ? 1 : 0), 0);
+            const needed = Math.ceil(this.match.matchFormat / 2);
+            
+            if (setsWon1 >= needed || setsWon2 >= needed) {
+                this.match.matchComplete = true;
+                this.match.winner = setsWon1 > setsWon2 ? this.match.players[1].name : this.match.players[2].name;
+                this.match.finalSets = this.match.setScores.slice();
+                this.match.isInProgress = false;
+                this.saveCurrentMatch();
+            }
+            
+            this.fastForwardModal.visible = false;
+        },
+        
+        /**
+         * Cancel fast forward changes.
+         */
+        cancelFastForward() {
+            this.fastForwardModal.visible = false;
+        },
         /**
          * Show the end match modal. Used to record a reason for ending a
          * match early and to specify a winner or no result.
@@ -1624,6 +1851,25 @@ createApp({
             this.endMatchModal.winner = null;
             this.endMatchModal.reason = 'completed';
             this.endMatchModal.notes = '';
+            
+            // Pre-populate with current set scores
+            for (let i = 0; i < 5; i++) {
+                if (i < this.match.setScores.length) {
+                    this.endMatchModal.setScores[i] = {
+                        p1: this.match.setScores[i].p1Games,
+                        p2: this.match.setScores[i].p2Games
+                    };
+                } else if (i === this.match.currentSet && (this.match.players[1].games > 0 || this.match.players[2].games > 0)) {
+                    // Current set in progress
+                    this.endMatchModal.setScores[i] = {
+                        p1: this.match.players[1].games,
+                        p2: this.match.players[2].games
+                    };
+                } else {
+                    this.endMatchModal.setScores[i] = { p1: 0, p2: 0 };
+                }
+            }
+            
             this.endMatchModal.visible = true;
         },
         /**
@@ -1642,6 +1888,34 @@ createApp({
                 alert('Please select a match result.');
                 return;
             }
+            
+            // Apply set scores from the modal
+            const newSetScores = [];
+            const newPlayerSets = { 1: [0, 0, 0, 0, 0], 2: [0, 0, 0, 0, 0] };
+            
+            for (let i = 0; i < this.match.matchFormat; i++) {
+                const setScore = this.endMatchModal.setScores[i];
+                if (setScore.p1 > 0 || setScore.p2 > 0) {
+                    newSetScores.push({
+                        p1Games: setScore.p1,
+                        p2Games: setScore.p2
+                    });
+                    
+                    // Determine set winner
+                    if (setScore.p1 > setScore.p2) {
+                        newPlayerSets[1][i] = 1;
+                    } else if (setScore.p2 > setScore.p1) {
+                        newPlayerSets[2][i] = 1;
+                    }
+                }
+            }
+            
+            // Update match state
+            this.match.setScores = newSetScores;
+            this.match.players[1].sets = newPlayerSets[1];
+            this.match.players[2].sets = newPlayerSets[2];
+            this.match.currentSet = newSetScores.length;
+            
             // Apply winner and finalise the match
             if (this.endMatchModal.winner === 0) {
                 // No result
@@ -1651,15 +1925,8 @@ createApp({
                 const winnerName = this.match.players[this.endMatchModal.winner].name;
                 this.match.matchComplete = true;
                 this.match.winner = winnerName;
-                // Assign remaining set (if current set not already recorded)
-                if (this.match.currentSet < this.match.matchFormat) {
-                    this.match.setScores[this.match.currentSet] = {
-                        p1Games: this.match.players[1].games,
-                        p2Games: this.match.players[2].games
-                    };
-                    this.match.players[this.endMatchModal.winner].sets[this.match.currentSet] = 1;
-                }
             }
+            
             // Copy final sets
             this.match.finalSets = this.match.setScores.slice();
             this.match.isInProgress = false;
