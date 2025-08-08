@@ -849,11 +849,21 @@ createApp({
         /**
          * Format a date string (yyyy‑mm‑dd) into a more friendly
          * locale‑specific format. The user locale is used automatically.
+         * Parses date components manually to avoid timezone issues.
          */
         formatDate(dateStr) {
             if (!dateStr) return '';
             try {
-                const d = new Date(dateStr);
+                // Parse date components manually to avoid timezone issues
+                const parts = dateStr.split('-');
+                if (parts.length !== 3) return dateStr;
+                
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // Month is 0-based
+                const day = parseInt(parts[2], 10);
+                
+                // Create date using local timezone
+                const d = new Date(year, month, day);
                 return d.toLocaleDateString();
             } catch (e) {
                 return dateStr;
@@ -872,7 +882,7 @@ createApp({
          * newMatch.date to today if not already set.
          */
         newMatchScreen() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = this.getTodayDateString();
             this.newMatch.date = this.newMatch.date || today;
             this.joinMatch.date = this.joinMatch.date || today;
             this.matchStartType = 'new';
@@ -1580,6 +1590,9 @@ createApp({
                     }
                 }
             }
+            
+            // Save the match state after each point to ensure persistence
+            this.saveCurrentMatch();
         },
         /**
          * Update players' serve statistics based on the recorded point.
@@ -2134,11 +2147,23 @@ createApp({
                 return `${pct}%`;
             }
             return '0';
+        },
+        /**
+         * Get today's date as a string in YYYY-MM-DD format using local timezone.
+         * This avoids issues with toISOString() which uses UTC and can show
+         * the wrong date for users in timezones behind UTC.
+         */
+        getTodayDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
     },
     mounted() {
         this.loadMatches();
         // Default date for new matches is today
-        this.newMatch.date = new Date().toISOString().split('T')[0];
+        this.newMatch.date = this.getTodayDateString();
     }
 }).mount('#app');

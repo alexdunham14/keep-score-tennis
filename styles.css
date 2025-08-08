@@ -981,13 +981,7 @@ h1:hover {
     background: var(--secondary-color);
 }
 
-.serve-btn[data-serve="double-fault"] {
-    background: var(--danger-color);
-}
-
-.serve-btn[data-serve="double-fault"]:hover {
-    background: #c32c2c;
-}
+/* Removed special styling for double-fault button to maintain consistency */
 
 /*
  * Responsive adjustments for small screens. On narrow viewports the
