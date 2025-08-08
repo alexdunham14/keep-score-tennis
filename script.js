@@ -454,19 +454,19 @@ createApp({
                         <div v-if="!serveModal.firstServe">
                             <h4>First Serve:</h4>
                             <div class="serve-buttons">
-                                <button class="serve-btn" @click="selectFirstServe('ace')">Ace</button>
-                                <button class="serve-btn" @click="selectFirstServe('unreturned')">Unreturned</button>
-                                <button class="serve-btn" @click="selectFirstServe('in')">In (Returned)</button>
-                                <button class="serve-btn" @click="selectFirstServe('out')">Out/Fault</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.firstServe === 'ace'}" @click="selectFirstServe('ace')">Ace</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.firstServe === 'unreturned'}" @click="selectFirstServe('unreturned')">Unreturned</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.firstServe === 'in'}" @click="selectFirstServe('in')">In (Returned)</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.firstServe === 'out'}" @click="selectFirstServe('out')">Out/Fault</button>
                             </div>
                         </div>
                         <div v-else-if="serveModal.firstServe === 'out' && !serveModal.secondServe">
                             <h4>Second Serve:</h4>
                             <div class="serve-buttons">
-                                <button class="serve-btn" @click="selectSecondServe('ace')">Ace</button>
-                                <button class="serve-btn" @click="selectSecondServe('unreturned')">Unreturned</button>
-                                <button class="serve-btn" @click="selectSecondServe('in')">In (Returned)</button>
-                                <button class="serve-btn" @click="selectSecondServe('double-fault')">Double Fault</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.secondServe === 'ace'}" @click="selectSecondServe('ace')">Ace</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.secondServe === 'unreturned'}" @click="selectSecondServe('unreturned')">Unreturned</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.secondServe === 'in'}" @click="selectSecondServe('in')">In (Returned)</button>
+                                <button class="serve-btn" :class="{'selected': serveModal.secondServe === 'double-fault'}" @click="selectSecondServe('double-fault')">Double Fault</button>
                             </div>
                         </div>
                         <div v-if="serveNeedsFinal()">
@@ -769,78 +769,75 @@ createApp({
         
         /**
          * Organizes point history by sets and games for the point breakdown modal.
+         * Uses the actual setNumber and gameNumber from point records.
          */
         organizedPointHistory() {
             if (!this.match || !this.match.pointHistory) return [];
             
-            const organized = [];
-            let currentSet = 1;
-            let currentGame = 1;
-            let gamePoints = [];
-            let setGames = [];
+            const setsMap = new Map();
             
-            this.match.pointHistory.forEach((point, index) => {
-                // Add point to current game
+            // Group points by set and game using actual point data
+            this.match.pointHistory.forEach(point => {
+                const setNum = point.setNumber;
+                const gameNum = point.gameNumber;
+                
+                if (!setsMap.has(setNum)) {
+                    setsMap.set(setNum, new Map());
+                }
+                
+                const setGames = setsMap.get(setNum);
+                if (!setGames.has(gameNum)) {
+                    setGames.set(gameNum, []);
+                }
+                
+                const gamePoints = setGames.get(gameNum);
                 gamePoints.push({
                     ...point,
                     pointNumber: gamePoints.length + 1
                 });
-                
-                // Check if this point completed a game (by looking at the next point's game context)
-                const nextPoint = this.match.pointHistory[index + 1];
-                const gameEnded = !nextPoint || nextPoint.gameNumber !== point.gameNumber;
-                
-                if (gameEnded) {
-                    // Determine game winner by looking at who won the last point of the game
-                    const gameWinner = this.match.players[point.winner].name;
-                    
-                    setGames.push({
-                        gameNumber: currentGame,
-                        points: [...gamePoints],
-                        winner: gameWinner,
-                        setNumber: currentSet
-                    });
-                    
-                    gamePoints = [];
-                    currentGame++;
-                    
-                    // Check if this game completed a set
-                    const setEnded = nextPoint && nextPoint.setNumber !== point.setNumber;
-                    
-                    if (setEnded || !nextPoint) {
-                        const setWinner = this.determineSetWinner(setGames, currentSet);
-                        organized.push({
-                            setNumber: currentSet,
-                            games: [...setGames],
-                            winner: setWinner,
-                            finalScore: this.getSetFinalScore(currentSet)
-                        });
-                        
-                        setGames = [];
-                        currentSet++;
-                        currentGame = 1;
-                    }
-                }
             });
             
-            // Handle current incomplete game/set
-            if (gamePoints.length > 0) {
-                setGames.push({
-                    gameNumber: currentGame,
-                    points: [...gamePoints],
-                    winner: 'In Progress',
-                    setNumber: currentSet
+            // Convert maps to organized array structure
+            const organized = [];
+            
+            for (const [setNumber, gamesMap] of setsMap) {
+                const games = [];
+                
+                for (const [gameNumber, points] of gamesMap) {
+                    // Determine game winner from the last point of the game
+                    const lastPoint = points[points.length - 1];
+                    const gameWinner = this.match.players[lastPoint.winner].name;
+                    
+                    // Check if this game is still in progress
+                    const isCurrentGame = (
+                        setNumber === this.match.currentSet + 1 && 
+                        gameNumber === this.calculateCurrentGameNumber()
+                    );
+                    
+                    games.push({
+                        gameNumber: gameNumber,
+                        points: points,
+                        winner: isCurrentGame ? 'In Progress' : gameWinner,
+                        setNumber: setNumber
+                    });
+                }
+                
+                // Sort games by game number
+                games.sort((a, b) => a.gameNumber - b.gameNumber);
+                
+                // Determine set winner
+                const setWinner = this.determineSetWinner(games, setNumber);
+                
+                organized.push({
+                    setNumber: setNumber,
+                    games: games,
+                    winner: setWinner,
+                    finalScore: this.getSetFinalScore(setNumber)
                 });
             }
             
-            if (setGames.length > 0) {
-                organized.push({
-                    setNumber: currentSet,
-                    games: [...setGames],
-                    winner: 'In Progress',
-                    finalScore: null
-                });
-            }
+            // Sort sets by set number
+            organized.sort((a, b) => a.setNumber - b.setNumber);
             
             return organized;
         }
@@ -1537,7 +1534,7 @@ createApp({
                 pointType: pointType || '',
                 comment: comment || '',
                 timestamp: new Date().toISOString(),
-                gameNumber: this.match.players[1].games + this.match.players[2].games + 1,
+                gameNumber: this.calculateCurrentGameNumber(),
                 setNumber: this.match.currentSet + 1,
                 before: before
             };
@@ -1760,7 +1757,7 @@ createApp({
                     comment: this.gameCommentModal.comment.trim(),
                     timestamp: new Date().toISOString(),
                     setNumber: this.match.currentSet + 1,
-                    gameNumber: this.match.players[1].games + this.match.players[2].games
+                    gameNumber: this.match.players[1].games + this.match.players[2].games + this.getTotalCompletedGames()
                 };
             }
             this.gameCommentModal.visible = false;
@@ -2159,6 +2156,34 @@ createApp({
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
+        },
+        /**
+         * Get total number of games completed in previous sets.
+         */
+        getTotalCompletedGames() {
+            let totalGames = 0;
+            
+            // Add games from all completed sets
+            for (let i = 0; i < this.match.currentSet; i++) {
+                if (this.match.setScores[i]) {
+                    totalGames += this.match.setScores[i].p1Games + this.match.setScores[i].p2Games;
+                }
+            }
+            
+            return totalGames;
+        },
+        /**
+         * Calculate the correct game number accounting for completed sets.
+         * This ensures proper game numbering when joining matches in progress.
+         */
+        calculateCurrentGameNumber() {
+            let totalGames = this.getTotalCompletedGames();
+            
+            // Add games from current set
+            totalGames += this.match.players[1].games + this.match.players[2].games;
+            
+            // Add 1 for the current game in progress
+            return totalGames + 1;
         }
     },
     mounted() {
