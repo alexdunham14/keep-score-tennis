@@ -1036,11 +1036,19 @@ createApp({
                 return;
             }
             
+            // Ensure currentPoints are properly initialized as numbers
+            this.joinMatch.currentPoints.p1 = Number(this.joinMatch.currentPoints.p1);
+            this.joinMatch.currentPoints.p2 = Number(this.joinMatch.currentPoints.p2);
+            
             // Create base match structure
             this.match = this.createJoinMatch();
             
             // Calculate current set and games based on set scores
             this.calculateMatchStateFromScores();
+            
+            // Explicitly set the current points after all processing is done
+            this.match.players[1].points = this.joinMatch.currentPoints.p1;
+            this.match.players[2].points = this.joinMatch.currentPoints.p2;
             
             // Hide any previous modals
             this.statsVisible = false;
@@ -1124,6 +1132,10 @@ createApp({
             const setScores = this.joinMatch.setScores;
             let currentSetIndex = 0;
             
+            // Preserve current points from the join form
+            const currentPointsP1 = this.joinMatch.currentPoints.p1;
+            const currentPointsP2 = this.joinMatch.currentPoints.p2;
+            
             // Process completed sets
             for (let i = 0; i < Math.min(setScores.length, this.joinMatch.matchFormat); i++) {
                 const set = setScores[i];
@@ -1168,6 +1180,10 @@ createApp({
                 this.match.matchComplete = true;
                 this.match.winner = setsWon1 > setsWon2 ? this.match.players[1].name : this.match.players[2].name;
             }
+            
+            // Restore current points from join form (these might have been overridden during processing)
+            this.match.players[1].points = currentPointsP1;
+            this.match.players[2].points = currentPointsP2;
         },
         /**
          * Check if a set is complete based on games won.
