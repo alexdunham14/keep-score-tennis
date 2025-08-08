@@ -349,7 +349,7 @@ createApp({
     // various modals based on the current application stage and state.
     template: `
         <div>
-            <h1>Tennis Scorekeeper</h1>
+            <h1 @click="stage = 'review'" style="cursor: pointer;">Tennis Scorekeeper</h1>
             <match-review
                 v-if="stage === 'review'"
                 :matches="matches"
@@ -370,20 +370,6 @@ createApp({
             ></match-setup>
             <!-- Active match scoreboard and related controls -->
             <div v-if="stage === 'match'" class="scoreboard">
-                <div class="match-info">
-                    <div class="match-actions">
-                        <button id="go-home" @click="goHome">Go Home</button>
-                        <button id="reset-match" @click="resetMatch">New Match</button>
-                    </div>
-                    <!-- Display tournament metadata including round, date, time and court -->
-                    <div class="match-meta" style="margin-top:10px; font-size:0.85em; color: var(--text-color);">
-                        <span v-if="match.tournament">{{ match.tournament }}</span>
-                        <span v-if="match.round"> • {{ match.round }}</span>
-                        <span v-if="match.date"> • {{ formatDate(match.date) }}</span>
-                        <span v-if="match.startTime"> • {{ match.startTime }}</span>
-                        <span v-if="match.court"> • {{ match.court }}</span>
-                    </div>
-                </div>
                 <table class="score-table">
                     <thead>
                         <tr>
@@ -495,12 +481,12 @@ createApp({
                             <div class="stroke-selection" v-if="serveModal.finalPlayer">
                                 <h5>What type of shot?</h5>
                                 <div class="ending-buttons">
-                                    <button class="ending-btn" @click="selectStroke('fh-winner')">Forehand Winner</button>
-                                    <button class="ending-btn" @click="selectStroke('bh-winner')">Backhand Winner</button>
-                                    <button class="ending-btn" @click="selectStroke('fh-unforced')">Forehand UE</button>
-                                    <button class="ending-btn" @click="selectStroke('bh-unforced')">Backhand UE</button>
-                                    <button class="ending-btn" @click="selectStroke('fh-forced')">Forced Forehand Error</button>
-                                    <button class="ending-btn" @click="selectStroke('bh-forced')">Forced Backhand Error</button>
+                                    <button class="ending-btn" :class="{'selected': serveModal.strokeType === 'fh-winner'}" @click="selectStroke('fh-winner')">Forehand Winner</button>
+                                    <button class="ending-btn" :class="{'selected': serveModal.strokeType === 'bh-winner'}" @click="selectStroke('bh-winner')">Backhand Winner</button>
+                                    <button class="ending-btn" :class="{'selected': serveModal.strokeType === 'fh-unforced'}" @click="selectStroke('fh-unforced')">Forehand UE</button>
+                                    <button class="ending-btn" :class="{'selected': serveModal.strokeType === 'bh-unforced'}" @click="selectStroke('bh-unforced')">Backhand UE</button>
+                                    <button class="ending-btn" :class="{'selected': serveModal.strokeType === 'fh-forced'}" @click="selectStroke('fh-forced')">Forced Forehand Error</button>
+                                    <button class="ending-btn" :class="{'selected': serveModal.strokeType === 'bh-forced'}" @click="selectStroke('bh-forced')">Forced Backhand Error</button>
                                 </div>
                             </div>
                         </div>

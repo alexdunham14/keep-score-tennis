@@ -46,6 +46,12 @@ h1 {
     font-weight: 700;
     letter-spacing: -0.025em;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+h1:hover {
+    color: #1c5fc8;
+    transform: scale(1.02);
 }
 
 /* Match Review Section */
@@ -1764,7 +1770,7 @@ h1 {
 }
 
 .point-type-btn.selected {
-    background: var(--primary-color);
+    background: #1e3a20;
     transform: scale(1.05);
 }
 
