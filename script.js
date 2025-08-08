@@ -371,14 +371,6 @@ createApp({
             <!-- Active match scoreboard and related controls -->
             <div v-if="stage === 'match'" class="scoreboard">
                 <div class="match-info">
-                    <div class="match-format">
-                        <label>
-                            <input type="radio" value="3" v-model.number="match.matchFormat" @change="changeMatchFormat"> Best of 3 Sets
-                        </label>
-                        <label>
-                            <input type="radio" value="5" v-model.number="match.matchFormat" @change="changeMatchFormat"> Best of 5 Sets
-                        </label>
-                    </div>
                     <div class="match-actions">
                         <button id="go-home" @click="goHome">Go Home</button>
                         <button id="reset-match" @click="resetMatch">New Match</button>
@@ -523,6 +515,9 @@ createApp({
                         <div class="point-comment-section" style="margin-top:15px;">
                             <h4>Point Comment (Optional):</h4>
                             <textarea v-model="serveModal.comment" placeholder="Add a comment about this point..." rows="4" class="mobile-friendly-textarea"></textarea>
+                        </div>
+                        <div class="point-submit-section" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #e9ecef;" v-if="serveModal.finalPlayer && serveModal.strokeType">
+                            <button class="submit-point-btn" @click="submitPointDetails()">Submit Point</button>
                         </div>
                     </div>
                 </div>
@@ -1463,29 +1458,42 @@ createApp({
             this.serveModal.finalPlayer = playerId;
         },
         /**
-         * Handle selection of the final stroke type. Once both the final
-         * player and stroke type are chosen the point can be finalised.
+         * Handle selection of the final stroke type. Just sets the stroke type
+         * without auto-submitting, allowing user to also select point type.
          *
          * @param {string} stroke one of 'fh-winner', 'bh-winner', 'fh-unforced', 'bh-unforced', 'fh-forced', 'bh-forced'
          */
         selectStroke(stroke) {
             this.serveModal.strokeType = stroke;
+        },
+        /**
+         * Submit the point with all selected details (stroke, point type, comment).
+         */
+        submitPointDetails() {
+            // Validate that we have all required selections
+            if (!this.serveModal.finalPlayer || !this.serveModal.strokeType) {
+                alert('Please select which player hit the final shot and what type of shot it was.');
+                return;
+            }
+            
             // Determine point winner based on stroke
             let winner;
-            if (stroke.includes('winner')) {
+            if (this.serveModal.strokeType.includes('winner')) {
                 winner = this.serveModal.finalPlayer;
             } else {
                 // Unforced error or forced error: opponent wins
                 winner = this.serveModal.finalPlayer === 1 ? 2 : 1;
             }
+            
             const serveData = {
                 firstServe: this.serveModal.firstServe,
                 secondServe: this.serveModal.firstServe === 'out' ? this.serveModal.secondServe : null
             };
             const pointEnding = {
                 finalPlayer: this.serveModal.finalPlayer,
-                strokeType: stroke
+                strokeType: this.serveModal.strokeType
             };
+            
             this.finalisePoint(winner, serveData, pointEnding, this.serveModal.pointType, this.serveModal.comment);
             this.closeServeModal();
         },

@@ -552,7 +552,7 @@ h1 {
     padding: 15px 20px;
     border-bottom: 1px solid #e5e7eb;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
 }
 
@@ -1801,6 +1801,27 @@ h1 {
     box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.1);
 }
 
+/* Point Submit Button */
+.submit-point-btn {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+    letter-spacing: -0.025em;
+}
+
+.submit-point-btn:hover {
+    background: #218c50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
 #point-comment {
     width: 100%;
     min-height: 80px;
@@ -2517,17 +2538,8 @@ h1 {
     
     /* Match Info Mobile */
     .match-info {
-        flex-direction: column;
-        gap: 15px;
-        padding: 12px;
-    }
-    
-    .match-format {
         justify-content: center;
-    }
-    
-    .match-format label {
-        font-size: 14px;
+        padding: 12px;
     }
     
     .match-actions {
