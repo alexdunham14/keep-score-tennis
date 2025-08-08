@@ -192,6 +192,7 @@ h1 {
     border: 2px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
+    text-align: center;
 }
 
 .players-section {
@@ -225,6 +226,7 @@ h1 {
     transition: border-color 0.15s ease;
     background: #fafafa;
     font-weight: 400;
+    text-align: center;
 }
 
 .player-setup input:focus {

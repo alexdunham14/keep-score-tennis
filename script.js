@@ -471,6 +471,14 @@ createApp({
                         <span class="close" @click="closeServeModal">&times;</span>
                     </div>
                     <div class="modal-body">
+                        <div class="quick-winner-section" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
+                            <h4>Quick Point Entry:</h4>
+                            <div class="quick-winner-buttons">
+                                <button class="player-btn" @click="quickFinalizePoint(1)" style="margin: 5px;">{{ match.players[1].name }} Won Point</button>
+                                <button class="player-btn" @click="quickFinalizePoint(2)" style="margin: 5px;">{{ match.players[2].name }} Won Point</button>
+                            </div>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Or fill out details below:</p>
+                        </div>
                         <div v-if="!serveModal.firstServe">
                             <h4>First Serve:</h4>
                             <div class="serve-buttons">
@@ -505,6 +513,8 @@ createApp({
                                     <button class="ending-btn" @click="selectStroke('bh-winner')">Backhand Winner</button>
                                     <button class="ending-btn" @click="selectStroke('fh-unforced')">Forehand UE</button>
                                     <button class="ending-btn" @click="selectStroke('bh-unforced')">Backhand UE</button>
+                                    <button class="ending-btn" @click="selectStroke('fh-forced')">Forced Forehand Error</button>
+                                    <button class="ending-btn" @click="selectStroke('bh-forced')">Forced Backhand Error</button>
                                 </div>
                             </div>
                         </div>
@@ -1446,7 +1456,7 @@ createApp({
          * Handle selection of the final stroke type. Once both the final
          * player and stroke type are chosen the point can be finalised.
          *
-         * @param {string} stroke one of 'fh-winner', 'bh-winner', 'fh-unforced', 'bh-unforced'
+         * @param {string} stroke one of 'fh-winner', 'bh-winner', 'fh-unforced', 'bh-unforced', 'fh-forced', 'bh-forced'
          */
         selectStroke(stroke) {
             this.serveModal.strokeType = stroke;
@@ -1455,7 +1465,7 @@ createApp({
             if (stroke.includes('winner')) {
                 winner = this.serveModal.finalPlayer;
             } else {
-                // Unforced error: opponent wins
+                // Unforced error or forced error: opponent wins
                 winner = this.serveModal.finalPlayer === 1 ? 2 : 1;
             }
             const serveData = {
@@ -1467,6 +1477,21 @@ createApp({
                 strokeType: stroke
             };
             this.finalisePoint(winner, serveData, pointEnding, this.serveModal.pointType, this.serveModal.comment);
+            this.closeServeModal();
+        },
+        /**
+         * Quick method to finalize a point with just the winner, no detailed tracking.
+         *
+         * @param {number} winner the player who won the point (1 or 2)
+         */
+        quickFinalizePoint(winner) {
+            // Use minimal serve data and point ending info
+            const serveData = {
+                firstServe: 'in',
+                secondServe: null
+            };
+            const pointEnding = null; // No detailed ending info
+            this.finalisePoint(winner, serveData, pointEnding, 'medium', '');
             this.closeServeModal();
         },
         /**
