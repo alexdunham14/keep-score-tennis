@@ -211,20 +211,17 @@ createApp({
                     <!-- New Match Setup -->
                     <div v-if="matchStartType === 'new'">
                         <div class="match-details">
-                            <h4>Match Details:</h4>
+                            <h4>Match Details</h4>
                             <div class="match-details-grid">
-                                <input type="text" v-model="newMatch.tournament" placeholder="Tournament/Event">
+                                <input type="text" v-model="newMatch.tournament" placeholder="Tournament or Event">
                                 <input type="date" v-model="newMatch.date">
                                 <input type="text" v-model="newMatch.court" placeholder="Court (e.g. Court 1, Centre Court)">
-                            </div>
-                            <div class="match-details-grid" style="margin-top:10px;">
                                 <input type="text" v-model="newMatch.round" placeholder="Round (e.g. Quarterfinal)">
                                 <input type="time" v-model="newMatch.startTime">
-                                <span></span>
                             </div>
                         </div>
                         <div class="players-section">
-                            <h4>Players:</h4>
+                            <h4>Players</h4>
                             <input type="text" v-model="newMatch.player1" placeholder="Player 1 Name">
                             <input type="text" v-model="newMatch.player2" placeholder="Player 2 Name">
                         </div>
@@ -257,20 +254,17 @@ createApp({
                     <!-- Join Match in Progress -->
                     <div v-if="matchStartType === 'join'">
                         <div class="match-details">
-                            <h4>Match Details:</h4>
+                            <h4>Match Details</h4>
                             <div class="match-details-grid">
-                                <input type="text" v-model="joinMatch.tournament" placeholder="Tournament/Event">
+                                <input type="text" v-model="joinMatch.tournament" placeholder="Tournament or Event">
                                 <input type="date" v-model="joinMatch.date">
                                 <input type="text" v-model="joinMatch.court" placeholder="Court (e.g. Court 1, Centre Court)">
-                            </div>
-                            <div class="match-details-grid" style="margin-top:10px;">
                                 <input type="text" v-model="joinMatch.round" placeholder="Round (e.g. Quarterfinal)">
                                 <input type="time" v-model="joinMatch.startTime">
-                                <span></span>
                             </div>
                         </div>
                         <div class="players-section">
-                            <h4>Players:</h4>
+                            <h4>Players</h4>
                             <input type="text" v-model="joinMatch.player1" placeholder="Player 1 Name">
                             <input type="text" v-model="joinMatch.player2" placeholder="Player 2 Name">
                         </div>
